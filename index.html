@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.5">
-    <title>基金涨幅卡 · 分组版（移动功能）</title>
+    <title>基金涨幅卡 · 分组版（净值表格）</title>
     <!-- Chart.js 轻量绘图 -->
     <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
     <!-- AWS SDK for R2 -->
@@ -42,18 +42,26 @@
         .rate-value.positive { color: #cf3e3e; }
         .rate-value.negative { color: #2e7d5e; }
         .risk-tag { font-size: 0.7rem; background: #f97316; color: white; padding: 2px 8px; border-radius: 20px; display: inline-block; margin-top: 4px; }
-        /* 移动控件 */
         .move-controls { display: flex; align-items: center; gap: 6px; margin-top: 10px; padding-top: 8px; border-top: 1px dashed #dbe1ef; }
         .move-select { flex: 1; padding: 6px 8px; border-radius: 20px; border: 1px solid #dbe1ef; font-size: 0.7rem; background: white; }
         .move-btn { background: #eef2f6; border: none; border-radius: 20px; padding: 6px 12px; font-size: 0.7rem; cursor: pointer; }
         .move-btn:hover { background: #dbe1ef; }
         .modal { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); align-items: center; justify-content: center; z-index: 1000; }
         .modal.active { display: flex; }
-        .modal-content { background: white; border-radius: 32px; padding: 24px; max-width: 800px; width: 90%; max-height: 80vh; overflow-y: auto; }
+        .modal-content { background: white; border-radius: 32px; padding: 24px; max-width: 900px; width: 90%; max-height: 80vh; overflow-y: auto; }
+        .modal-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px; }
+        .modal-header h3 { margin: 0; font-size: 1.2rem; }
+        .close-modal { background: none; border: none; font-size: 28px; cursor: pointer; color: #6b7a9f; }
         .period-selector { display: flex; gap: 8px; margin: 16px 0; }
         .period-btn { background: #eef2f9; border: none; padding: 8px 16px; border-radius: 30px; cursor: pointer; }
         .period-btn.active { background: #0b1b32; color: white; }
-        .chart-container { width: 100%; height: 300px; }
+        .chart-container { width: 100%; height: 250px; margin-bottom: 20px; }
+        .table-container { max-height: 300px; overflow-y: auto; border: 1px solid #e9ecf5; border-radius: 16px; }
+        table { width: 100%; border-collapse: collapse; font-size: 0.8rem; }
+        th { background: #f0f2f8; position: sticky; top: 0; padding: 8px; text-align: center; }
+        td { padding: 6px 8px; border-bottom: 1px solid #e9ecf5; text-align: center; }
+        .positive { color: #cf3e3e; font-weight: 500; }
+        .negative { color: #2e7d5e; font-weight: 500; }
         .sync-area { display: flex; gap: 12px; justify-content: center; margin: 20px 0; }
         .sync-btn { background: #eef2f6; border: none; padding: 10px 20px; border-radius: 40px; cursor: pointer; }
         .footer-note { margin-top: 30px; font-size: 0.75rem; color: #9aa9c2; text-align: center; }
@@ -62,7 +70,7 @@
 <body>
 <div class="container">
     <div class="header">
-        <h1>📈 基金分组看板 <span>云端同步·可移动</span></h1>
+        <h1>📈 基金分组看板 <span>云端同步·净值表格</span></h1>
         <div class="sub">近3/5/7/10/15日涨幅 · 最新净值 · 15日最大跌幅≥8.5%高亮</div>
         
         <div class="group-tabs" id="groupTabs"></div>
@@ -83,7 +91,7 @@
         <span class="sync-status" id="syncStatus"></span>
     </div>
     <div class="footer-note">
-        ✨ 点击卡片查看曲线 · 卡片底部可移动基金至其他分组（允许重复）
+        ✨ 点击卡片查看曲线和15日净值明细
     </div>
 </div>
 
@@ -102,6 +110,8 @@
         <div class="chart-container">
             <canvas id="fundChart"></canvas>
         </div>
+        <div style="margin-top: 20px; font-weight: 500;">最近15个交易日净值明细</div>
+        <div class="table-container" id="netWorthTable"></div>
     </div>
 </div>
 
@@ -240,7 +250,7 @@
                         const defaultGroup = appData.groups.find(g => g.id === 'default');
                         const delGroup = appData.groups.find(g => g.id === gid);
                         if (defaultGroup && delGroup) {
-                            defaultGroup.fundCodes = [...defaultGroup.fundCodes, ...delGroup.fundCodes]; // 允许重复
+                            defaultGroup.fundCodes = [...defaultGroup.fundCodes, ...delGroup.fundCodes];
                             appData.groups = appData.groups.filter(g => g.id !== gid);
                             if (currentGroupId === gid) currentGroupId = 'default';
                             saveAppData(); renderGroups(); renderCards();
@@ -341,26 +351,19 @@
         });
     }
 
-    // ---------- 移动基金 ----------
+    // 移动基金
     function moveFund(code, fromGroupId, toGroupId) {
         const fromGroup = appData.groups.find(g => g.id === fromGroupId);
         const toGroup = appData.groups.find(g => g.id === toGroupId);
         if (!fromGroup || !toGroup || fromGroupId === toGroupId) return;
-
-        // 从原分组移除
         fromGroup.fundCodes = fromGroup.fundCodes.filter(c => c !== code);
-        // 添加到目标分组（允许重复）
         toGroup.fundCodes.push(code);
-
         saveAppData();
-        // 如果当前分组是被移出的分组或目标分组，重新渲染
-        if (currentGroupId === fromGroupId || currentGroupId === toGroupId) {
-            renderCards();
-        }
-        renderGroups(); // 更新风险标记
+        if (currentGroupId === fromGroupId || currentGroupId === toGroupId) renderCards();
+        renderGroups();
     }
 
-    // ---------- 渲染卡片（含移动控件）----------
+    // 渲染卡片
     async function renderCards() {
         const container = document.getElementById('cardContainer');
         if (!container) return;
@@ -426,7 +429,6 @@
 
             const riskTag = riskFlag ? '<span class="risk-tag">⚠️ 跌幅大</span>' : '';
 
-            // 构建其他分组的下拉选项（排除当前分组）
             let moveOptions = '';
             appData.groups.forEach(g => {
                 if (g.id !== currentGroupId) {
@@ -456,7 +458,6 @@
 
         container.innerHTML = html;
 
-        // 绑定删除
         document.querySelectorAll('.delete-btn').forEach(btn => {
             btn.addEventListener('click', (e) => {
                 e.stopPropagation();
@@ -465,7 +466,6 @@
             });
         });
 
-        // 绑定移动按钮
         document.querySelectorAll('.move-btn').forEach(btn => {
             btn.addEventListener('click', (e) => {
                 e.stopPropagation();
@@ -474,13 +474,10 @@
                 const select = document.querySelector(`.move-select[data-code="${code}"][data-current-group="${fromGroup}"]`);
                 if (!select) return;
                 const toGroup = select.value;
-                if (toGroup) {
-                    moveFund(code, fromGroup, toGroup);
-                }
+                if (toGroup) moveFund(code, fromGroup, toGroup);
             });
         });
 
-        // 卡片点击显示曲线
         document.querySelectorAll('.card').forEach(card => {
             card.addEventListener('click', (e) => {
                 if (e.target.classList.contains('delete-btn') || e.target.classList.contains('move-btn') || e.target.tagName === 'SELECT') return;
@@ -511,7 +508,6 @@
         const targetGroup = appData.groups.find(g => g.id === targetGroupId);
         if (!targetGroup) return;
 
-        // 不再检查全局重复，直接添加
         try {
             addBtn.disabled = true;
             addBtn.textContent = '验证中...';
@@ -533,7 +529,7 @@
         renderGroups();
     }
 
-    // ---------- 曲线模态框 ----------
+    // 曲线模态框 + 净值表格
     function showFundChart(code) {
         const fund = appData.fundsCache[code];
         if (!fund?.netWorth) { alert('数据未就绪'); return; }
@@ -541,6 +537,7 @@
         document.getElementById('modalFundName').textContent = fund.name + ' (' + code + ')';
         document.getElementById('chartModal').classList.add('active');
         drawChart(15);
+        renderNetWorthTable(15);
     }
 
     function drawChart(days) {
@@ -560,7 +557,24 @@
         });
     }
 
-    // ---------- 初始化 ----------
+    function renderNetWorthTable(days) {
+        if (!currentModalFund?.netWorth) return;
+        const netWorth = currentModalFund.netWorth;
+        const slice = netWorth.slice(-days).reverse(); // 从新到旧显示
+        let tableHtml = '<table><thead><tr><th>日期</th><th>净值</th><th>日涨跌率</th></tr></thead><tbody>';
+        for (let i = 0; i < slice.length; i++) {
+            const item = slice[i];
+            const prev = (i < slice.length - 1) ? slice[i+1] : null;
+            const change = prev ? ((item.y / prev.y) - 1) * 100 : null;
+            const changeStr = change !== null ? (change > 0 ? `+${change.toFixed(2)}%` : `${change.toFixed(2)}%`) : '--';
+            const changeClass = change > 0 ? 'positive' : (change < 0 ? 'negative' : '');
+            tableHtml += `<tr><td>${item.x}</td><td>${item.y.toFixed(4)}</td><td class="${changeClass}">${changeStr}</td></tr>`;
+        }
+        tableHtml += '</tbody></table>';
+        document.getElementById('netWorthTable').innerHTML = tableHtml;
+    }
+
+    // 初始化
     async function init() {
         if (s3) {
             try {
@@ -603,7 +617,9 @@
             btn.addEventListener('click', () => {
                 document.querySelectorAll('.period-btn').forEach(b => b.classList.remove('active'));
                 btn.classList.add('active');
-                drawChart(parseInt(btn.dataset.days, 10));
+                const days = parseInt(btn.dataset.days, 10);
+                drawChart(days);
+                renderNetWorthTable(days);
             });
         });
 
