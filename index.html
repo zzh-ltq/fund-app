@@ -3,12 +3,13 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.5">
-    <title>基金涨幅卡 · 分组版（双风险标记）</title>
+    <title>基金涨幅卡 · UTC偏移方案</title>
     <!-- Chart.js -->
     <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
     <!-- AWS SDK for R2 -->
     <script src="https://sdk.amazonaws.com/js/aws-sdk-2.1692.0.min.js"></script>
     <style>
+        /* 样式与之前相同，此处省略以节省篇幅，实际使用时请包含完整样式 */
         * { box-sizing: border-box; font-family: system-ui, sans-serif; }
         body { background: #f3f5f9; margin: 0; padding: 24px 16px; display: flex; flex-direction: column; align-items: center; }
         .container { max-width: 1200px; width: 100%; }
@@ -71,8 +72,8 @@
 <body>
 <div class="container">
     <div class="header">
-        <h1>📈 基金分组看板 <span>云端同步·双风险标记</span></h1>
-        <div class="sub">近3/5/7/10/15日涨幅 · 最新净值 · 15日最大跌幅≥8.5%高亮 · 日跌幅≥5%绿心标记</div>
+        <h1>📈 基金分组看板 <span>UTC偏移方案</span></h1>
+        <div class="sub">天天基金UTC时间戳+8小时 · 准确显示交易日</div>
         
         <div class="group-tabs" id="groupTabs"></div>
 
@@ -92,7 +93,7 @@
         <span class="sync-status" id="syncStatus"></span>
     </div>
     <div class="footer-note">
-        ✨ 点击卡片查看曲线和15日净值明细 · 分组标签红色!为15日跌幅≥8.5%，绿色💚为日跌幅≥5%
+        ✨ 点击卡片查看曲线 · 所有净值日期已根据UTC偏移量修正
     </div>
 </div>
 
@@ -121,9 +122,8 @@
     // ---------- 配置 ----------
     const STORAGE_KEY = 'funds_app_data';
     const PERIODS = [3, 5, 7, 10, 15];
-    const RISK_THRESHOLD = -8.5;           // 15日最大跌幅阈值
-    const DAILY_RISK_THRESHOLD = -5.0;     // 日跌幅阈值
-
+    const RISK_THRESHOLD = -8.5;
+    const DAILY_RISK_THRESHOLD = -5.0;
     const MAX_HISTORY_POINTS = 120;
 
     const R2_CONFIG = {
@@ -150,18 +150,43 @@
     let chartInstance = null;
     let currentModalFund = null;
 
-    // ---------- 日期格式化 ----------
+    // ---------- UTC偏移量：28800000毫秒 ----------
+    const UTC_OFFSET = 28800000; // 8小时
+
+    // ---------- 日期格式化：将UTC时间戳转换为东八区日期 ----------
     function formatDate(dateInput) {
         if (!dateInput) return '';
-        if (typeof dateInput === 'string' && /^\d{4}-\d{2}-\d{2}$/.test(dateInput)) return dateInput;
+        
+        // 如果已经是 YYYY-MM-DD 字符串，直接返回（可能是缓存数据）
+        if (typeof dateInput === 'string' && /^\d{4}-\d{2}-\d{2}$/.test(dateInput)) {
+            return dateInput;
+        }
+
+        // 尝试转换为数字（处理时间戳字符串或数字）
         let timestamp = Number(dateInput);
         if (!isNaN(timestamp) && timestamp > 0) {
-            const d = new Date(timestamp);
-            if (!isNaN(d.getTime())) return d.toISOString().split('T')[0];
+            // 加上偏移量得到东八区时间戳
+            const beijingTime = timestamp + UTC_OFFSET;
+            const d = new Date(beijingTime);
+            if (!isNaN(d.getTime())) {
+                const year = d.getUTCFullYear();      // 注意：beijingTime已经是东八区，但Date对象基于UTC，所以要用getUTCFullYear等获取
+                const month = String(d.getUTCMonth() + 1).padStart(2, '0');
+                const day = String(d.getUTCDate()).padStart(2, '0');
+                return `${year}-${month}-${day}`;
+            }
         }
+
+        // 最后尝试直接解析
         const d = new Date(dateInput);
-        if (!isNaN(d.getTime())) return d.toISOString().split('T')[0];
-        return String(dateInput);
+        if (!isNaN(d.getTime())) {
+            // 对于非时间戳字符串，可能需要转换，但这里假设已经正确
+            const year = d.getFullYear();
+            const month = String(d.getMonth() + 1).padStart(2, '0');
+            const day = String(d.getDate()).padStart(2, '0');
+            return `${year}-${month}-${day}`;
+        }
+
+        return String(dateInput); // 保底
     }
 
     // ---------- 本地存储 ----------
@@ -212,7 +237,7 @@
         }).promise();
     }
 
-    // ---------- 分组渲染（带双风险标记）----------
+    // ---------- 分组渲染 ----------
     function renderGroups() {
         const tabsContainer = document.getElementById('groupTabs');
         const groupSelect = document.getElementById('groupSelect');
@@ -220,14 +245,12 @@
 
         let tabsHtml = '', optionsHtml = '';
         appData.groups.forEach(group => {
-            // 检查分组内是否有15日风险基金
             const has15DRisk = group.fundCodes.some(code => {
                 const cached = appData.fundsCache[code];
                 if (!cached || !cached.netWorth) return false;
                 const maxDrop = computeMaxDrop(cached.netWorth, 15);
                 return maxDrop !== null && maxDrop <= RISK_THRESHOLD;
             });
-            // 检查分组内是否有日跌幅风险基金
             const hasDailyRisk = group.fundCodes.some(code => {
                 const cached = appData.fundsCache[code];
                 if (!cached || !cached.netWorth) return false;
@@ -283,7 +306,7 @@
         });
     }
 
-    // ---------- 基金数据加载 ----------
+    // ---------- 基金数据加载（天天基金接口）----------
     async function loadFundData(code, forceRefresh = false) {
         if (!forceRefresh && appData.fundsCache[code]?.netWorth) {
             return appData.fundsCache[code];
@@ -304,10 +327,16 @@
                     let netWorth = null;
                     if (window.Data_netWorthTrend && Array.isArray(window.Data_netWorthTrend)) {
                         netWorth = window.Data_netWorthTrend.map(item => ({
-                            x: formatDate(item.x),
+                            // 存储原始时间戳，但显示时使用格式化后的日期（我们存储原始值，在需要显示时再通过formatDate转换）
+                            x: item.x, // 保留原始时间戳或字符串
                             y: item.y
                         }));
-                        netWorth.sort((a, b) => new Date(a.x) - new Date(b.x));
+                        // 按日期升序排序（使用原始值比较）
+                        netWorth.sort((a, b) => {
+                            const dateA = new Date(a.x).getTime();
+                            const dateB = new Date(b.x).getTime();
+                            return dateA - dateB;
+                        });
                         if (netWorth.length > MAX_HISTORY_POINTS) netWorth = netWorth.slice(-MAX_HISTORY_POINTS);
                     }
                     const name = window.fund_name || window.fS_name || code;
@@ -333,7 +362,7 @@
         });
     }
 
-    // 计算15日内最大跌幅（返回具体数值）
+    // 计算15日内最大跌幅（使用原始净值数据，不需要日期转换）
     function computeMaxDrop(netWorth, days = 15) {
         if (!netWorth || netWorth.length < 2) return null;
         const latest = netWorth[netWorth.length - 1].y;
@@ -346,13 +375,13 @@
         return minReturn;
     }
 
-    // 获取最新净值信息
+    // 获取最新净值信息（日期使用formatDate转换后显示）
     function getLatestInfo(netWorth) {
         if (!netWorth || netWorth.length === 0) return { date: '', value: 0, change: null };
         const latest = netWorth[netWorth.length - 1];
         const prev = netWorth.length > 1 ? netWorth[netWorth.length - 2] : null;
         const change = prev ? ((latest.y / prev.y) - 1) * 100 : null;
-        const dateStr = formatDate(latest.x);
+        const dateStr = formatDate(latest.x); // 转换显示日期
         return { date: dateStr, value: latest.y, change };
     }
 
@@ -378,7 +407,7 @@
         renderGroups();
     }
 
-    // 渲染卡片（带双风险标记）
+    // 渲染卡片
     async function renderCards() {
         const container = document.getElementById('cardContainer');
         if (!container) return;
@@ -448,12 +477,11 @@
                 ratesHtml = `<div class="error-placeholder">加载失败</div>`;
             }
 
-            // 构建标记
             let tagsHtml = '';
             if (risk15DFlag && risk15DValue !== null) {
                 tagsHtml += `<span class="risk-tag">⚠️ 跌幅大 ${risk15DValue.toFixed(2)}%</span>`;
             }
-            if (dailyRiskFlag) {
+            if (dailyRiskFlag && dailyChange !== null) {
                 tagsHtml += `<span class="daily-risk-tag">💚 日跌幅 ${dailyChange.toFixed(2)}%</span>`;
             }
 
@@ -572,7 +600,7 @@
         if (!currentModalFund?.netWorth) return;
         const netWorth = currentModalFund.netWorth;
         const slice = netWorth.slice(-days);
-        const labels = slice.map(d => d.x);
+        const labels = slice.map(d => formatDate(d.x)); // 日期转换后用于显示
         const startY = slice[0]?.y || 1;
         const returns = slice.map(d => ((d.y / startY) - 1) * 100);
 
@@ -596,7 +624,8 @@
             const change = prev ? ((item.y / prev.y) - 1) * 100 : null;
             const changeStr = change !== null ? (change > 0 ? `+${change.toFixed(2)}%` : `${change.toFixed(2)}%`) : '--';
             const changeClass = change > 0 ? 'positive' : (change < 0 ? 'negative' : '');
-            tableHtml += `<tr><td>${item.x}</td><td>${item.y.toFixed(4)}</td><td class="${changeClass}">${changeStr}</td></tr>`;
+            const displayDate = formatDate(item.x); // 转换日期
+            tableHtml += `<tr><td>${displayDate}</td><td>${item.y.toFixed(4)}</td><td class="${changeClass}">${changeStr}</td></tr>`;
         }
         tableHtml += '</tbody></table>';
         document.getElementById('netWorthTable').innerHTML = tableHtml;
