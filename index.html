@@ -3,11 +3,11 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.5">
-    <title>基金涨幅卡 · 云端同步版</title>
-    <!-- 引入 AWS SDK 用于连接 Cloudflare R2 -->
+    <title>基金涨幅卡 · 分组版</title>
+    <!-- Chart.js 轻量绘图 -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+    <!-- AWS SDK for R2 (保留原同步逻辑) -->
     <script src="https://sdk.amazonaws.com/js/aws-sdk-2.1692.0.min.js"></script>
-    <!-- 引入 Chart.js 用于绘制曲线 -->
-    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.8/dist/chart.umd.min.js"></script>
     <style>
         * {
             box-sizing: border-box;
@@ -29,14 +29,14 @@
         .header {
             background: white;
             border-radius: 28px;
-            padding: 24px 28px;
+            padding: 20px 24px;
             box-shadow: 0 8px 20px rgba(0,0,0,0.02);
-            margin-bottom: 28px;
+            margin-bottom: 20px;
             border: 1px solid rgba(0,0,0,0.03);
         }
         h1 {
-            margin: 0 0 12px 0;
-            font-size: 1.9rem;
+            margin: 0 0 8px 0;
+            font-size: 1.8rem; /* 略调小 */
             font-weight: 600;
             letter-spacing: -0.02em;
             color: #0b1b32;
@@ -48,84 +48,93 @@
         h1 span {
             background: #eef2ff;
             color: #1d4ed8;
-            font-size: 0.9rem;
+            font-size: 0.85rem;
             padding: 4px 12px;
             border-radius: 40px;
             font-weight: 500;
         }
         .sub {
             color: #4b587c;
-            margin-bottom: 24px;
-            font-size: 0.95rem;
+            margin-bottom: 16px;
+            font-size: 0.9rem;
             border-left: 3px solid #3b82f6;
             padding-left: 16px;
             background: #fafbff;
             border-radius: 0 8px 8px 0;
             line-height: 1.5;
         }
-        /* 分组管理样式 */
-        .group-manager {
+        /* 分组标签栏 */
+        .group-tabs {
             display: flex;
-            gap: 12px;
             flex-wrap: wrap;
+            gap: 8px;
+            margin: 20px 0 16px;
             align-items: center;
-            margin-bottom: 20px;
-            padding: 16px;
-            background: #f8faff;
-            border-radius: 20px;
         }
-        .group-select {
-            flex: 1 1 200px;
-            padding: 12px 16px;
-            border: 1.5px solid #e1e6f0;
+        .group-tab {
+            background: #f0f2f8;
             border-radius: 40px;
-            font-size: 0.95rem;
-            background: white;
-            outline: none;
-            transition: 0.2s;
-        }
-        .group-select:focus {
-            border-color: #3b82f6;
-            box-shadow: 0 4px 12px rgba(59,130,246,0.15);
-        }
-        .group-btn {
-            padding: 12px 20px;
-            border-radius: 40px;
+            padding: 8px 18px;
             font-size: 0.9rem;
             font-weight: 500;
+            color: #2d3a5e;
             cursor: pointer;
-            transition: 0.15s;
-            border: 1px solid #e1e6f0;
-            background: white;
-            flex: 0 0 auto;
+            border: 1px solid transparent;
+            transition: 0.1s;
+            display: flex;
+            align-items: center;
+            gap: 6px;
         }
-        .group-btn.add-group {
-            background: #3b82f6;
+        .group-tab.active {
+            background: #0b1b32;
             color: white;
-            border-color: #3b82f6;
+            border-color: #1e2d4a;
         }
-        .group-btn.add-group:hover {
-            background: #2563eb;
-        }
-        .group-btn.del-group {
-            background: #f87171;
+        .group-tab .warning-badge {
+            background: #f97316;
             color: white;
-            border-color: #f87171;
+            border-radius: 50%;
+            width: 18px;
+            height: 18px;
+            font-size: 12px;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: bold;
         }
-        .group-btn.del-group:hover {
-            background: #ef4444;
-        }
-        .group-warning {
-            color: #ef4444;
-            font-weight: 600;
+        .group-tab .delete-group {
             margin-left: 4px;
+            background: none;
+            border: none;
+            color: inherit;
+            font-size: 16px;
+            cursor: pointer;
+            opacity: 0.6;
+            padding: 0 2px;
         }
-        /* 添加基金区域样式 */
+        .group-tab .delete-group:hover {
+            opacity: 1;
+        }
+        .add-group-btn {
+            background: #e4e9f5;
+            border: none;
+            border-radius: 40px;
+            width: 36px;
+            height: 36px;
+            font-size: 20px;
+            cursor: pointer;
+            color: #2d3a5e;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+        }
+        /* 基金添加区域 */
         .add-area {
             display: flex;
             gap: 12px;
             flex-wrap: wrap;
             align-items: center;
+            margin-top: 8px;
         }
         .input-wrapper {
             flex: 2 1 260px;
@@ -133,10 +142,10 @@
         }
         .input-wrapper input {
             width: 100%;
-            padding: 16px 20px;
+            padding: 14px 18px; /* 略微调小 */
             border: 1.5px solid #e1e6f0;
             border-radius: 44px;
-            font-size: 1rem;
+            font-size: 0.95rem;
             background: white;
             transition: 0.2s;
             box-shadow: 0 2px 6px rgba(0,0,0,0.01);
@@ -150,13 +159,21 @@
             color: #9aa8c7;
             font-weight: 300;
         }
+        .group-select {
+            padding: 14px 18px;
+            border-radius: 44px;
+            border: 1.5px solid #e1e6f0;
+            background: white;
+            font-size: 0.95rem;
+            min-width: 120px;
+        }
         .add-btn {
             background: #0b1b32;
             color: white;
             border: none;
-            padding: 16px 32px;
+            padding: 14px 28px;
             border-radius: 60px;
-            font-size: 1rem;
+            font-size: 0.95rem;
             font-weight: 500;
             cursor: pointer;
             transition: 0.15s;
@@ -172,101 +189,60 @@
             background: #091626;
             transform: scale(0.98);
         }
-        .info-note {
-            margin-top: 16px;
-            font-size: 0.85rem;
-            color: #6a789b;
-            background: #f0f4fe;
-            padding: 10px 16px;
-            border-radius: 30px;
-            display: inline-block;
-        }
-        /* 基金卡片样式 - 字体减小2号 */
+        /* 卡片网格 */
         .card-grid {
             display: grid;
-            grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
-            gap: 22px;
+            grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+            gap: 18px;
             margin-top: 20px;
         }
+        /* 卡片样式 - 字体调小2号 (原1.2rem标题改为1rem, 其他相应调整) */
         .card {
             background: white;
-            border-radius: 28px;
-            padding: 20px 20px 18px 20px;
+            border-radius: 24px;
+            padding: 16px 16px 14px 16px;
             box-shadow: 0 12px 30px -8px rgba(0,20,50,0.1);
             transition: 0.2s;
             border: 1px solid rgba(255,255,255,0.5);
             backdrop-filter: blur(2px);
             display: flex;
             flex-direction: column;
-            cursor: pointer;
-        }
-        /* 风险标记样式 */
-        .card.high-risk {
-            border: 2px solid #ef4444;
+            cursor: pointer; /* 点击卡片弹出曲线 */
             position: relative;
         }
-        .card.high-risk::before {
-            content: '⚠️';
-            position: absolute;
-            top: 12px;
-            right: 12px;
-            font-size: 16px;
-        }
-        .card:hover {
-            transform: translateY(-4px);
-            box-shadow: 0 24px 36px -12px rgba(0,50,100,0.2);
+        .card.risk-highlight {
+            border: 2px solid #f97316;
+            box-shadow: 0 0 0 1px #f97316 inset;
         }
         .card-header {
             display: flex;
             justify-content: space-between;
             align-items: flex-start;
-            margin-bottom: 18px;
+            margin-bottom: 10px;
         }
         .fund-title {
             font-weight: 700;
-            font-size: 1rem; /* 原1.2rem 减小2号 */
+            font-size: 1rem; /* 调小 */
             line-height: 1.4;
             color: #0b1b32;
             word-break: break-word;
-            max-width: 70%;
+            max-width: 65%;
         }
         .fund-code {
-            font-size: 0.7rem; /* 原0.8rem 减小2号 */
+            font-size: 0.7rem; /* 调小 */
             background: #eef2f9;
-            padding: 4px 10px;
+            padding: 3px 8px;
             border-radius: 40px;
             color: #2d3a5e;
             font-weight: 500;
         }
-        .fund-networth {
-            font-size: 0.9rem; /* 新增最新净值样式 */
-            color: #0b1b32;
-            margin-bottom: 8px;
-            padding: 8px 12px;
-            background: #f8faff;
-            border-radius: 16px;
-        }
-        .fund-networth .value {
-            font-weight: 600;
-            color: #3b82f6;
-        }
-        .fund-networth .change {
-            margin-left: 8px;
-            font-weight: 600;
-        }
-        .fund-networth .change.positive {
-            color: #cf3e3e;
-        }
-        .fund-networth .change.negative {
-            color: #2e7d5e;
-        }
         .delete-btn {
             background: none;
             border: 1px solid #e9ecf5;
-            width: 36px;
-            height: 36px;
+            width: 30px;
+            height: 30px;
             border-radius: 50%;
-            font-size: 18px;
+            font-size: 16px;
             color: #8f9fc0;
             cursor: pointer;
             display: flex;
@@ -274,82 +250,134 @@
             justify-content: center;
             transition: 0.15s;
             background: white;
-            flex-shrink: 0;
+            z-index: 2;
         }
         .delete-btn:hover {
             background: #fee2e2;
             border-color: #f87171;
             color: #b91c1c;
         }
+        .latest-info {
+            display: flex;
+            justify-content: space-between;
+            font-size: 0.75rem; /* 调小 */
+            color: #4b587c;
+            margin-bottom: 8px;
+            background: #f8faff;
+            padding: 6px 10px;
+            border-radius: 18px;
+        }
+        .latest-info .date {
+            font-weight: 400;
+        }
+        .latest-info .value {
+            font-weight: 600;
+            color: #0b1b32;
+        }
+        .change {
+            margin-left: 6px;
+            font-weight: 500;
+        }
+        .change.positive { color: #cf3e3e; }
+        .change.negative { color: #2e7d5e; }
         .rates-grid {
             display: flex;
             flex-wrap: wrap;
-            gap: 12px 8px;
-            margin: 12px 0 6px;
+            gap: 8px 4px;
+            margin: 8px 0 4px;
             background: #f8faff;
-            padding: 16px 12px;
-            border-radius: 24px;
+            padding: 12px 8px;
+            border-radius: 20px;
         }
         .rate-item {
             flex: 1 0 auto;
-            min-width: 70px;
+            min-width: 50px;
             text-align: center;
         }
         .rate-label {
-            font-size: 0.65rem; /* 原0.7rem 减小2号 */
+            font-size: 0.6rem; /* 调小 */
             text-transform: uppercase;
             color: #5c6b93;
             letter-spacing: 0.3px;
             font-weight: 500;
         }
         .rate-value {
-            font-size: 1rem; /* 原1.2rem 减小2号 */
+            font-size: 1rem; /* 调小 */
             font-weight: 600;
             margin-top: 2px;
         }
-        .rate-value.positive {
-            color: #cf3e3e;
+        .rate-value.positive { color: #cf3e3e; }
+        .rate-value.negative { color: #2e7d5e; }
+        .rate-value.neutral { color: #6b7a9f; }
+        .risk-tag {
+            font-size: 0.7rem;
+            background: #f97316;
+            color: white;
+            padding: 2px 8px;
+            border-radius: 20px;
+            display: inline-block;
+            margin-top: 4px;
+            align-self: flex-start;
         }
-        .rate-value.negative {
-            color: #2e7d5e;
+        /* 模态框 (曲线) */
+        .modal {
+            display: none;
+            position: fixed;
+            top: 0; left: 0; width: 100%; height: 100%;
+            background: rgba(0,0,0,0.5);
+            align-items: center;
+            justify-content: center;
+            z-index: 1000;
         }
-        .rate-value.neutral {
+        .modal.active {
+            display: flex;
+        }
+        .modal-content {
+            background: white;
+            border-radius: 32px;
+            padding: 24px;
+            max-width: 800px;
+            width: 90%;
+            max-height: 80vh;
+            overflow-y: auto;
+        }
+        .modal-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 16px;
+        }
+        .modal-header h3 {
+            margin: 0;
+            font-size: 1.2rem;
+        }
+        .close-modal {
+            background: none;
+            border: none;
+            font-size: 28px;
+            cursor: pointer;
             color: #6b7a9f;
         }
-        .max-drop-rate {
-            font-size: 0.8rem;
-            color: #6a789b;
-            margin-top: 8px;
-            padding: 6px 12px;
-            background: #f0f4fe;
-            border-radius: 12px;
+        .period-selector {
+            display: flex;
+            gap: 8px;
+            margin: 16px 0;
         }
-        .max-drop-rate.high-risk {
-            color: #ef4444;
-            background: #fef2f2;
-            font-weight: 500;
+        .period-btn {
+            background: #eef2f9;
+            border: none;
+            padding: 8px 16px;
+            border-radius: 30px;
+            font-size: 0.85rem;
+            cursor: pointer;
         }
-        .error-placeholder {
-            color: #a00;
-            background: #fff2f2;
-            padding: 12px;
-            border-radius: 20px;
-            text-align: center;
-            font-size: 0.9rem;
-            margin: 12px 0;
+        .period-btn.active {
+            background: #0b1b32;
+            color: white;
         }
-        .empty-state {
-            text-align: center;
-            padding: 60px 20px;
-            background: white;
-            border-radius: 48px;
-            color: #6f7da0;
-            border: 2px dashed #dbe1ef;
-            margin-top: 40px;
-        }
-        .empty-state p {
-            font-size: 1.1rem;
-            margin: 12px 0 0;
+        .chart-container {
+            width: 100%;
+            height: 300px;
         }
         .sync-area {
             display: flex;
@@ -362,175 +390,71 @@
         .sync-btn {
             background: #eef2f6;
             border: none;
-            padding: 12px 24px;
+            padding: 10px 20px;
             border-radius: 40px;
             font-weight: 500;
             cursor: pointer;
-            transition: 0.15s;
+            font-size: 0.85rem;
             border: 1px solid #dbe1ef;
-        }
-        .sync-btn:hover {
-            background: #e2e8f2;
         }
         .sync-status {
             color: #6a789b;
-            font-size: 0.9rem;
-            min-width: 100px;
-            text-align: center;
+            font-size: 0.8rem;
         }
         .footer-note {
-            margin-top: 40px;
-            font-size: 0.8rem;
+            margin-top: 30px;
+            font-size: 0.75rem;
             color: #9aa9c2;
             text-align: center;
-        }
-        .loading-dot {
-            display: inline-block;
-            width: 8px;
-            height: 8px;
-            border-radius: 50%;
-            background: #3b82f6;
-            margin-left: 4px;
-            animation: pulse 1.4s infinite;
-        }
-        @keyframes pulse { 0% { opacity: 0.3; } 50% { opacity: 1; } 100% { opacity: 0.3; } }
-        
-        /* 模态框样式 */
-        .modal {
-            display: none;
-            position: fixed;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            background: rgba(0, 0, 0, 0.5);
-            z-index: 1000;
-            align-items: center;
-            justify-content: center;
-            padding: 20px;
-        }
-        .modal-content {
-            background: white;
-            border-radius: 24px;
-            padding: 28px;
-            width: 100%;
-            max-width: 800px;
-            max-height: 90vh;
-            overflow-y: auto;
-            position: relative;
-        }
-        .modal-close {
-            position: absolute;
-            top: 16px;
-            right: 16px;
-            background: none;
-            border: none;
-            font-size: 24px;
-            cursor: pointer;
-            color: #6a789b;
-            width: 40px;
-            height: 40px;
-            border-radius: 50%;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-        }
-        .modal-close:hover {
-            background: #f0f4fe;
-            color: #0b1b32;
-        }
-        .modal-title {
-            font-size: 1.4rem;
-            font-weight: 600;
-            color: #0b1b32;
-            margin-bottom: 20px;
-            text-align: center;
-        }
-        .chart-container {
-            position: relative;
-            height: 400px;
-            width: 100%;
-        }
-        .chart-periods {
-            display: flex;
-            gap: 8px;
-            justify-content: center;
-            margin-bottom: 16px;
-            flex-wrap: wrap;
-        }
-        .chart-period-btn {
-            padding: 8px 16px;
-            border-radius: 20px;
-            border: 1px solid #e1e6f0;
-            background: white;
-            cursor: pointer;
-            font-size: 0.9rem;
-            transition: 0.2s;
-        }
-        .chart-period-btn.active {
-            background: #3b82f6;
-            color: white;
-            border-color: #3b82f6;
         }
     </style>
 </head>
 <body>
 <div class="container">
     <div class="header">
-        <h1>
-            📈 基金涨幅卡
-            <span>云端同步·多设备·分组管理</span>
-        </h1>
-        <div class="sub">
-            近3/5/7/10/15个交易日涨幅 · 数据自动同步到 Cloudflare R2 · 支持分组管理和风险标记
-        </div>
+        <h1>📈 基金分组看板 <span>云端同步·风险标记</span></h1>
+        <div class="sub">近3/5/7/10/15日涨幅 · 最新净值 · 15日最大跌幅≥8.5%高亮</div>
         
-        <!-- 分组管理区域 -->
-        <div class="group-manager">
-            <select id="groupSelect" class="group-select">
-                <!-- 动态渲染分组 -->
-            </select>
-            <button class="group-btn add-group" id="addGroupBtn">➕ 添加分组</button>
-            <button class="group-btn del-group" id="deleteGroupBtn">🗑️ 删除分组</button>
+        <!-- 分组标签栏 -->
+        <div class="group-tabs" id="groupTabs">
+            <!-- 由JS动态渲染 -->
         </div>
 
+        <!-- 添加基金区域 -->
         <div class="add-area">
             <div class="input-wrapper">
-                <input type="text" id="fundCodeInput" placeholder="输入基金代码 (例如 160119 或 005827)" pattern="\d*" inputmode="numeric">
+                <input type="text" id="fundCodeInput" placeholder="基金代码 (如 160119)" pattern="\d*" inputmode="numeric">
             </div>
-            <button class="add-btn" id="addFundBtn">➕ 添加基金</button>
-        </div>
-        <div class="info-note">
-            ⚡ 数据来源：天天基金网 · 添加/删除/分组自动同步至云端 · 最大跌幅≥8.5%将标记风险基金
+            <select id="groupSelect" class="group-select"></select>
+            <button class="add-btn" id="addFundBtn">➕ 添加</button>
         </div>
     </div>
 
     <!-- 卡片容器 -->
-    <div id="cardContainer" class="card-grid">
-        <!-- 动态渲染 -->
-    </div>
+    <div id="cardContainer" class="card-grid"></div>
 
-    <!-- 同步控制区域 -->
+    <!-- 同步控制区 -->
     <div class="sync-area">
-        <button class="sync-btn" id="syncToCloudBtn">☁️ 手动同步到云端</button>
+        <button class="sync-btn" id="syncToCloudBtn">☁️ 手动同步云端</button>
         <span class="sync-status" id="syncStatus"></span>
     </div>
-
     <div class="footer-note">
-        ✨ 基金分组保存在本地及云端（Cloudflare R2）。打开网页自动同步 · 点击基金卡片查看涨跌曲线
+        ✨ 点击卡片查看15/30/60/90日曲线 · 分组管理自动保存
     </div>
 </div>
 
-<!-- 基金曲线模态框 -->
-<div class="modal" id="fundChartModal">
+<!-- 曲线模态框 -->
+<div class="modal" id="chartModal">
     <div class="modal-content">
-        <button class="modal-close" id="modalCloseBtn">✕</button>
-        <h2 class="modal-title" id="modalTitle">基金涨跌曲线</h2>
-        <div class="chart-periods">
-            <button class="chart-period-btn active" data-days="15">近15天</button>
-            <button class="chart-period-btn" data-days="30">近30天</button>
-            <button class="chart-period-btn" data-days="60">近60天</button>
-            <button class="chart-period-btn" data-days="90">近90天</button>
+        <div class="modal-header">
+            <h3 id="modalFundName">基金名称</h3>
+            <button class="close-modal" id="closeModalBtn">&times;</button>
+        </div>
+        <div class="period-selector" id="periodSelector">
+            <button class="period-btn active" data-days="15">15日</button>
+            <button class="period-btn" data-days="30">30日</button>
+            <button class="period-btn" data-days="60">60日</button>
+            <button class="period-btn" data-days="90">90日</button>
         </div>
         <div class="chart-container">
             <canvas id="fundChart"></canvas>
@@ -540,22 +464,21 @@
 
 <script>
 (function() {
-    // --- 配置 ---
-    const STORAGE_KEY = 'fund-groups';
-    const PERIODS = [3, 5, 7, 10, 15];  // 需要计算的交易日数
-    const RISK_THRESHOLD = 8.5; // 风险阈值8.5%
-    const CHART_PERIODS = [15, 30, 60, 90]; // 图表显示的自然日数
+    // ---------- 配置 ----------
+    const STORAGE_KEY = 'funds_app_data';      // 新版存储对象
+    const PERIODS = [3, 5, 7, 10, 15];          // 卡片涨幅周期
+    const RISK_THRESHOLD = -8.5;                 // 最大跌幅阈值
 
-    // --- Cloudflare R2 配置（请根据您的实际信息修改）---
+    // Cloudflare R2 配置 (请替换为您的实际值)
     const R2_CONFIG = {
-        bucketName: 'fund-list-app',                // 存储桶名称
-        accessKeyId: 'df123c57ee036af018c3f6f801fae726',        // 访问密钥ID
-        secretAccessKey: 'c38798027a0815dae26376089d4f15eef26e2eb66487b4cf9346a17f26ff29e3',  // 机密密钥
-        endpoint: 'https://d6ac8bc5f7ebda3a5ac875c4346917fe.r2.cloudflarestorage.com'          // S3端点
+        bucketName: 'fund-list-app',
+        accessKeyId: 'df123c57ee036af018c3f6f801fae726',
+        secretAccessKey: 'c38798027a0815dae26376089d4f15eef26e2eb66487b4cf9346a17f26ff29e3',
+        endpoint: 'https://d6ac8bc5f7ebda3a5ac875c4346917fe.r2.cloudflarestorage.com'
     };
 
-    // 初始化 S3 客户端 (AWS SDK 已通过 script 标签加载)
-    let s3;
+    // 初始化 S3 (如果可用)
+    let s3 = null;
     try {
         s3 = new AWS.S3({
             endpoint: R2_CONFIG.endpoint,
@@ -565,462 +488,358 @@
             signatureVersion: 'v4',
             region: 'auto'
         });
-        console.log('S3 客户端初始化成功');
-    } catch (e) {
-        console.error('S3 客户端初始化失败', e);
-    }
+    } catch (e) { console.warn('S3 init failed', e); }
 
-    // --- 全局状态 ---
-    let groups = [];            // 分组数据 [{ id, name, funds: [] }]
-    let currentGroupId = '';    // 当前选中的分组ID
-    let fundsData = [];         // 当前分组的基金数据 { code, name, netWorth, error, latestNetWorth, dailyChange, maxDropRate }
-    let currentLoadSeq = 0;     // 用于忽略过期异步回调
-    let currentChart = null;    // 当前图表实例
-    let currentFundData = null; // 当前显示图表的基金数据
+    // ---------- 全局数据结构 ----------
+    // appData = { groups: [ { id, name, fundCodes: [] } ], fundsCache: { code: { name, netWorth, error } } }
+    let appData = {
+        groups: [],
+        fundsCache: {}   // 缓存基金净值数据，避免重复加载
+    };
+    let currentGroupId = 'default';   // 当前选中的分组ID
+    let chartInstance = null;         // 当前图表实例
+    let currentModalFund = null;      // 模态框当前显示的基金数据
 
-    // --- DOM 元素 ---
-    const cardContainer = document.getElementById('cardContainer');
-    const fundCodeInput = document.getElementById('fundCodeInput');
-    const addBtn = document.getElementById('addFundBtn');
-    const groupSelect = document.getElementById('groupSelect');
-    const addGroupBtn = document.getElementById('addGroupBtn');
-    const deleteGroupBtn = document.getElementById('deleteGroupBtn');
-    const syncToCloudBtn = document.getElementById('syncToCloudBtn');
-    const syncStatus = document.getElementById('syncStatus');
-    const fundChartModal = document.getElementById('fundChartModal');
-    const modalCloseBtn = document.getElementById('modalCloseBtn');
-    const modalTitle = document.getElementById('modalTitle');
-    const fundChart = document.getElementById('fundChart');
-    const chartPeriodBtns = document.querySelectorAll('.chart-period-btn');
-
-    // --- 工具函数 ---
-    // 生成唯一ID
-    function generateId() {
-        return 'group_' + Date.now() + '_' + Math.floor(Math.random() * 1000);
-    }
-
-    // 格式化日期
-    function formatDate(date) {
-        return date.toISOString().split('T')[0];
-    }
-
-    // 获取自然日范围内的净值数据
-    function getNetWorthInDays(netWorth, days) {
-        if (!netWorth || netWorth.length === 0) return [];
-        
-        // 转换为Date对象并排序
-        const sorted = [...netWorth].map(item => ({
-            date: new Date(item.x),
-            value: item.y
-        })).sort((a, b) => a.date - b.date);
-        
-        // 计算起始日期
-        const endDate = new Date();
-        endDate.setDate(endDate.getDate() - 1); // 昨天
-        const startDate = new Date();
-        startDate.setDate(endDate.getDate() - days + 1);
-        
-        // 筛选指定天数内的数据
-        return sorted.filter(item => 
-            item.date >= startDate && item.date <= endDate
-        );
-    }
-
-    // 计算前15自然日最大累积跌幅
-    function calculateMaxDropRate(netWorth) {
-        if (!netWorth || netWorth.length < 2) return 0;
-        
-        // 转换为Date对象并排序
-        const sorted = [...netWorth].map(item => ({
-            date: new Date(item.x),
-            value: item.y
-        })).sort((a, b) => b.date - a.date);
-        
-        // 取最新的15个自然日数据
-        const latestDate = sorted[0].date;
-        const fifteenDaysAgo = new Date(latestDate);
-        fifteenDaysAgo.setDate(fifteenDaysAgo.getDate() - 15);
-        
-        const recentData = sorted.filter(item => item.date >= fifteenDaysAgo);
-        if (recentData.length < 2) return 0;
-        
-        // 计算每一天作为起点到最新日的累积涨跌
-        let maxDrop = 0;
-        const latestValue = recentData[0].value;
-        
-        for (let i = 1; i < recentData.length; i++) {
-            const currentValue = recentData[i].value;
-            const dropRate = ((currentValue - latestValue) / currentValue) * 100;
-            if (dropRate > maxDrop) {
-                maxDrop = dropRate;
-            }
-        }
-        
-        return parseFloat(maxDrop.toFixed(2));
-    }
-
-    // 检查分组是否有高风险基金
-    function checkGroupHasHighRisk(groupId) {
-        const group = groups.find(g => g.id === groupId);
-        if (!group) return false;
-        
-        for (const fundCode of group.funds) {
-            const fund = fundsData.find(f => f.code === fundCode);
-            if (fund && fund.maxDropRate >= RISK_THRESHOLD) {
-                return true;
-            }
-        }
-        return false;
-    }
-
-    // --- 本地存储操作 ---
-    function getStoredGroups() {
+    // ---------- 本地存储操作 ----------
+    function loadAppData() {
         try {
-            const stored = localStorage.getItem(STORAGE_KEY);
-            if (stored) {
-                return JSON.parse(stored);
+            const raw = localStorage.getItem(STORAGE_KEY);
+            if (raw) {
+                const parsed = JSON.parse(raw);
+                // 如果解析后符合新格式（有groups字段），则使用，否则迁移旧数据
+                if (parsed && Array.isArray(parsed.groups)) {
+                    appData = parsed;
+                } else {
+                    // 旧格式：直接是数组 [code1, code2] -> 迁移到默认分组
+                    const oldCodes = Array.isArray(parsed) ? parsed : [];
+                    appData = {
+                        groups: [{ id: 'default', name: '默认', fundCodes: oldCodes }],
+                        fundsCache: {}
+                    };
+                }
+            } else {
+                // 全新初始化
+                appData = {
+                    groups: [{ id: 'default', name: '默认', fundCodes: [] }],
+                    fundsCache: {}
+                };
             }
         } catch (e) {
-            console.error('读取本地存储失败', e);
+            console.warn('loadAppData error', e);
+            appData = { groups: [{ id: 'default', name: '默认', fundCodes: [] }], fundsCache: {} };
         }
-        // 默认分组
-        return [{
-            id: generateId(),
-            name: '默认分组',
-            funds: []
-        }];
+        // 确保fundsCache存在
+        if (!appData.fundsCache) appData.fundsCache = {};
     }
 
-    function setStoredGroups(newGroups) {
-        groups = [...newGroups];
-        // 保存到本地
-        localStorage.setItem(STORAGE_KEY, JSON.stringify(groups));
-        // 异步保存到云端
+    function saveAppData() {
+        localStorage.setItem(STORAGE_KEY, JSON.stringify(appData));
+        // 异步同步到云端
         if (s3) {
-            saveToCloud(groups).catch(err => {
-                console.warn('云端备份失败，但本地已保存', err);
-                showSyncStatus('❌ 云端同步失败', 3000);
-            });
-        } else {
-            console.warn('S3未初始化，无法同步到云端');
+            saveToCloud(appData).catch(err => console.warn('cloud sync failed', err));
         }
-        // 更新分组选择器
-        renderGroupSelect();
     }
 
-    // --- 云端读写函数 ---
+    // 云端读写
     async function loadFromCloud() {
-        if (!s3) throw new Error('S3客户端未初始化');
-        const params = {
-            Bucket: R2_CONFIG.bucketName,
-            Key: 'fund-groups.json'
-        };
+        if (!s3) throw new Error('S3未初始化');
+        const params = { Bucket: R2_CONFIG.bucketName, Key: 'funds_app_data.json' };
         try {
             const data = await s3.getObject(params).promise();
             const content = data.Body.toString('utf-8');
             return JSON.parse(content);
-        } catch (error) {
-            // 文件不存在属于正常情况（首次使用）
-            if (error.code === 'NoSuchKey') {
-                console.log('云端无数据，将使用本地数据');
-                return null;
-            }
-            throw error;
+        } catch (e) {
+            if (e.code === 'NoSuchKey') return null;
+            throw e;
         }
     }
 
-    async function saveToCloud(groupsData) {
-        if (!s3) throw new Error('S3客户端未初始化');
+    async function saveToCloud(data) {
+        if (!s3) return;
         const params = {
             Bucket: R2_CONFIG.bucketName,
-            Key: 'fund-groups.json',
-            Body: JSON.stringify(groupsData),
+            Key: 'funds_app_data.json',
+            Body: JSON.stringify(data),
             ContentType: 'application/json',
             CacheControl: 'no-cache'
         };
         await s3.putObject(params).promise();
-        console.log('已同步到云端');
     }
 
-    // 显示同步状态（临时消息）
-    function showSyncStatus(msg, duration = 2000) {
-        if (syncStatus) {
-            syncStatus.textContent = msg;
-            if (duration > 0) {
-                setTimeout(() => { syncStatus.textContent = ''; }, duration);
-            }
-        }
-    }
+    // ---------- 分组管理 ----------
+    function renderGroups() {
+        const tabsContainer = document.getElementById('groupTabs');
+        const groupSelect = document.getElementById('groupSelect');
+        if (!tabsContainer) return;
 
-    // --- 分组管理函数 ---
-    // 渲染分组选择器
-    function renderGroupSelect() {
-        if (!groupSelect) return;
-        
-        groupSelect.innerHTML = '';
-        groups.forEach(group => {
-            const option = document.createElement('option');
-            option.value = group.id;
-            option.textContent = group.name;
-            
-            // 如果分组有高风险基金，添加感叹号
-            if (checkGroupHasHighRisk(group.id)) {
-                option.textContent += ' <span class="group-warning">❗</span>';
-            }
-            
-            groupSelect.appendChild(option);
+        let tabsHtml = '';
+        let optionsHtml = '';
+
+        appData.groups.forEach(group => {
+            // 检查该分组下是否有风险基金 (最大跌幅≥8.5%)
+            const hasRisk = group.fundCodes.some(code => {
+                const cached = appData.fundsCache[code];
+                if (!cached || !cached.netWorth) return false;
+                const maxDrop = computeMaxDrop(cached.netWorth, 15);
+                return maxDrop !== null && maxDrop <= RISK_THRESHOLD;
+            });
+
+            const activeClass = group.id === currentGroupId ? 'active' : '';
+            const warningBadge = hasRisk ? '<span class="warning-badge">!</span>' : '';
+
+            // 不可删除默认分组
+            const deleteBtn = group.id === 'default' ? '' : 
+                `<button class="delete-group" data-group-id="${group.id}" title="删除分组">✕</button>`;
+
+            tabsHtml += `
+                <div class="group-tab ${activeClass}" data-group-id="${group.id}">
+                    ${group.name} ${warningBadge} ${deleteBtn}
+                </div>
+            `;
+
+            optionsHtml += `<option value="${group.id}">${group.name}</option>`;
         });
-        
-        // 选中当前分组
-        if (currentGroupId && groups.some(g => g.id === currentGroupId)) {
-            groupSelect.value = currentGroupId;
-        } else if (groups.length > 0) {
-            currentGroupId = groups[0].id;
-            groupSelect.value = currentGroupId;
+
+        // 添加分组按钮
+        tabsHtml += `<button class="add-group-btn" id="addGroupBtn">+</button>`;
+        tabsContainer.innerHTML = tabsHtml;
+
+        if (groupSelect) groupSelect.innerHTML = optionsHtml;
+
+        // 绑定分组点击事件
+        document.querySelectorAll('.group-tab[data-group-id]').forEach(el => {
+            el.addEventListener('click', (e) => {
+                // 如果点击的是删除按钮，不切换分组
+                if (e.target.classList.contains('delete-group')) return;
+                const gid = el.getAttribute('data-group-id');
+                if (gid) {
+                    currentGroupId = gid;
+                    renderGroups();
+                    renderCards();   // 重新显示当前分组卡片
+                }
+            });
+        });
+
+        // 删除分组按钮
+        document.querySelectorAll('.delete-group').forEach(btn => {
+            btn.addEventListener('click', (e) => {
+                e.stopPropagation();
+                const gid = btn.getAttribute('data-group-id');
+                if (gid && gid !== 'default') {
+                    if (confirm(`删除分组「${appData.groups.find(g=>g.id===gid)?.name}”，其下的基金将移至默认分组`)) {
+                        // 移动基金到默认分组
+                        const defaultGroup = appData.groups.find(g => g.id === 'default');
+                        const delGroup = appData.groups.find(g => g.id === gid);
+                        if (defaultGroup && delGroup) {
+                            defaultGroup.fundCodes.push(...delGroup.fundCodes);
+                            appData.groups = appData.groups.filter(g => g.id !== gid);
+                            if (currentGroupId === gid) currentGroupId = 'default';
+                            saveAppData();
+                            renderGroups();
+                            renderCards();
+                        }
+                    }
+                }
+            });
+        });
+
+        // 添加分组按钮
+        const addBtn = document.getElementById('addGroupBtn');
+        if (addBtn) {
+            addBtn.addEventListener('click', () => {
+                const newName = prompt('请输入新分组名称', '新分组');
+                if (newName && newName.trim()) {
+                    const newId = 'group_' + Date.now() + '_' + Math.random().toString(36).substr(2, 6);
+                    appData.groups.push({ id: newId, name: newName.trim(), fundCodes: [] });
+                    saveAppData();
+                    renderGroups();
+                }
+            });
         }
-        
-        // 加载当前分组的基金
-        loadAllFunds();
     }
 
-    // 添加新分组
-    function addNewGroup() {
-        const groupName = prompt('请输入新分组名称：', '新分组');
-        if (!groupName || groupName.trim() === '') return;
-        
-        const newGroup = {
-            id: generateId(),
-            name: groupName.trim(),
-            funds: []
-        };
-        
-        const newGroups = [...groups, newGroup];
-        setStoredGroups(newGroups);
-        currentGroupId = newGroup.id;
-        renderGroupSelect();
-        showSyncStatus('✅ 分组创建成功', 2000);
-    }
-
-    // 删除当前分组
-    function deleteCurrentGroup() {
-        if (groups.length <= 1) {
-            alert('至少保留一个分组！');
-            return;
+    // ---------- 基金数据加载 ----------
+    async function loadFundData(code, forceRefresh = false) {
+        // 优先从缓存读取
+        if (!forceRefresh && appData.fundsCache[code] && appData.fundsCache[code].netWorth) {
+            return appData.fundsCache[code];
         }
-        
-        const currentGroup = groups.find(g => g.id === currentGroupId);
-        if (!currentGroup) return;
-        
-        if (!confirm(`确定要删除分组「${currentGroup.name}」吗？该分组下的所有基金也会被删除！`)) {
-            return;
-        }
-        
-        const newGroups = groups.filter(g => g.id !== currentGroupId);
-        setStoredGroups(newGroups);
-        currentGroupId = newGroups[0].id;
-        renderGroupSelect();
-        showSyncStatus('✅ 分组删除成功', 2000);
-    }
 
-    // 切换分组
-    function changeGroup() {
-        currentGroupId = groupSelect.value;
-        loadAllFunds();
-    }
-
-    // --- 基金数据加载函数 ---
-    // 从天天基金加载单个基金净值
-    function loadFundData(code) {
         return new Promise((resolve, reject) => {
-            // 清理之前可能残留的全局变量
             const GLOBAL_KEYS = ['Data_netWorthTrend', 'fund_name', 'fS_name'];
             GLOBAL_KEYS.forEach(key => delete window[key]);
 
             const script = document.createElement('script');
             script.src = `https://fund.eastmoney.com/pingzhongdata/${code}.js?t=${Date.now()}`;
             script.charset = 'utf-8';
-
-            const timeoutId = setTimeout(() => {
-                script.remove();
-                reject(new Error('加载超时'));
-            }, 10000);
+            const timeoutId = setTimeout(() => { script.remove(); reject(new Error('超时')); }, 10000);
 
             script.onload = () => {
                 setTimeout(() => {
                     clearTimeout(timeoutId);
                     let netWorth = null;
                     if (window.Data_netWorthTrend && Array.isArray(window.Data_netWorthTrend)) {
-                        netWorth = window.Data_netWorthTrend.map(item => ({
-                            x: item.x,
-                            y: item.y
-                        }));
+                        netWorth = window.Data_netWorthTrend.map(item => ({ x: item.x, y: item.y }));
                     }
                     const name = window.fund_name || window.fS_name || code;
                     GLOBAL_KEYS.forEach(key => delete window[key]);
                     script.remove();
 
                     if (netWorth && netWorth.length > 0) {
-                        // 计算最新净值和当日涨跌
-                        const sorted = [...netWorth].sort((a, b) => new Date(b.x) - new Date(a.x));
-                        const latestNetWorth = sorted[0].y;
-                        let dailyChange = 0;
-                        if (sorted.length > 1) {
-                            const prevNetWorth = sorted[1].y;
-                            dailyChange = ((latestNetWorth - prevNetWorth) / prevNetWorth) * 100;
-                        }
-                        
-                        // 计算前15天最大累积跌幅
-                        const maxDropRate = calculateMaxDropRate(netWorth);
-
-                        resolve({ 
-                            code, 
-                            name, 
-                            netWorth,
-                            latestNetWorth: parseFloat(latestNetWorth.toFixed(4)),
-                            dailyChange: parseFloat(dailyChange.toFixed(2)),
-                            maxDropRate
-                        });
+                        const fundInfo = { code, name, netWorth, error: false };
+                        // 存入缓存
+                        appData.fundsCache[code] = fundInfo;
+                        resolve(fundInfo);
                     } else {
-                        reject(new Error('净值数据为空或格式错误'));
+                        reject(new Error('无净值'));
                     }
                 }, 60);
             };
-
             script.onerror = () => {
                 clearTimeout(timeoutId);
                 GLOBAL_KEYS.forEach(key => delete window[key]);
                 script.remove();
-                reject(new Error('网络请求失败，请检查代码是否正确'));
+                reject(new Error('网络错误'));
             };
-
             document.head.appendChild(script);
         });
     }
 
-    // 计算交易日涨幅
+    // 计算15日内最大跌幅（百分比，负值）
+    function computeMaxDrop(netWorth, days = 15) {
+        if (!netWorth || netWorth.length < 2) return null;
+        const sorted = [...netWorth].sort((a,b) => new Date(b.x) - new Date(a.x));
+        const latest = sorted[0].y;
+        // 取最近days个点（如果不足则全部）
+        const limit = Math.min(days, sorted.length - 1);
+        let minReturn = 0;
+        for (let i = 1; i <= limit; i++) {
+            const ret = (latest / sorted[i].y - 1) * 100;
+            if (ret < minReturn) minReturn = ret;
+        }
+        return minReturn;
+    }
+
+    // 计算最新净值日期和日涨跌
+    function getLatestInfo(netWorth) {
+        if (!netWorth || netWorth.length === 0) return { date: '', value: 0, change: null };
+        const sorted = [...netWorth].sort((a,b) => new Date(b.x) - new Date(a.x));
+        const latest = sorted[0];
+        const prev = sorted[1];
+        let change = null;
+        if (prev) {
+            change = ((latest.y / prev.y) - 1) * 100;
+        }
+        return { date: latest.x, value: latest.y, change };
+    }
+
+    // 计算涨幅
     function computeRates(netWorth) {
         if (!netWorth || netWorth.length === 0) return PERIODS.map(() => null);
-        const sorted = [...netWorth].sort((a, b) => new Date(b.x) - new Date(a.x));
+        const sorted = [...netWorth].sort((a,b) => new Date(b.x) - new Date(a.x));
         const latest = sorted[0].y;
         return PERIODS.map(days => {
             if (sorted.length > days) {
-                const old = sorted[days].y;
-                return ((latest / old) - 1) * 100;
+                return ((latest / sorted[days].y) - 1) * 100;
             }
             return null;
         });
     }
 
-    // --- 渲染函数 ---
-    // 渲染基金卡片
-    function renderCards() {
-        if (!cardContainer) return;
+    // 渲染当前分组的卡片
+    async function renderCards() {
+        const container = document.getElementById('cardContainer');
+        if (!container) return;
 
-        if (fundsData.length === 0) {
-            const currentGroup = groups.find(g => g.id === currentGroupId);
-            cardContainer.innerHTML = `
-                <div class="empty-state" style="grid-column:1/-1;">
-                    <div style="font-size:48px;">📭</div>
-                    <p>分组「${currentGroup?.name || '默认分组'}」还没有添加任何基金<br>在上方输入基金代码开始跟踪</p>
-                </div>
-            `;
+        const currentGroup = appData.groups.find(g => g.id === currentGroupId);
+        if (!currentGroup) return;
+
+        const fundCodes = currentGroup.fundCodes;
+        if (fundCodes.length === 0) {
+            container.innerHTML = '<div class="empty-state" style="grid-column:1/-1;"><div style="font-size:48px;">📂</div><p>该分组暂无基金，输入代码添加</p></div>';
             return;
         }
 
+        // 对于每个基金，获取缓存数据；若缓存缺失，则先显示加载占位并触发加载
         let html = '';
-        for (const item of fundsData) {
-            const { code, name, netWorth, error, latestNetWorth, dailyChange, maxDropRate } = item;
-            const isError = error === true;
+        for (let code of fundCodes) {
+            let cached = appData.fundsCache[code];
+            if (!cached) {
+                cached = { code, name: '加载中...', netWorth: null, error: false };
+                // 异步加载，不等待
+                loadFundData(code).then(() => renderCards()).catch(() => {
+                    appData.fundsCache[code] = { code, name: '加载失败', netWorth: null, error: true };
+                    renderCards();
+                });
+            }
+
+            const name = cached.name || code;
+            const netWorth = cached.netWorth;
+            const isError = cached.error;
             const isLoading = !isError && !netWorth;
-            const isHighRisk = maxDropRate >= RISK_THRESHOLD;
 
-            let rates = [];
-            if (!isError && netWorth) {
-                rates = computeRates(netWorth);
+            // 计算风险标记
+            let riskFlag = false;
+            let maxDrop = null;
+            if (netWorth) {
+                maxDrop = computeMaxDrop(netWorth, 15);
+                if (maxDrop !== null && maxDrop <= RISK_THRESHOLD) riskFlag = true;
             }
 
-            // 最新净值和当日涨跌HTML
-            let netWorthHtml = '';
-            if (!isError && !isLoading) {
-                let changeClass = 'neutral';
-                let changeSign = '';
-                if (dailyChange > 0) {
-                    changeClass = 'positive';
-                    changeSign = '+';
-                } else if (dailyChange < 0) {
-                    changeClass = 'negative';
-                }
-                netWorthHtml = `
-                    <div class="fund-networth">
-                        最新净值: <span class="value">${latestNetWorth}</span>
-                        <span class="change ${changeClass}">${changeSign}${dailyChange}%</span>
+            // 最新净值信息
+            let latestHtml = '';
+            if (netWorth) {
+                const { date, value, change } = getLatestInfo(netWorth);
+                const changeStr = change !== null ? (change > 0 ? `+${change.toFixed(2)}%` : `${change.toFixed(2)}%`) : '--';
+                const changeClass = change > 0 ? 'positive' : (change < 0 ? 'negative' : '');
+                latestHtml = `
+                    <div class="latest-info">
+                        <span class="date">${date}</span>
+                        <span class="value">${value.toFixed(4)} <span class="change ${changeClass}">${changeStr}</span></span>
                     </div>
                 `;
+            } else if (isLoading) {
+                latestHtml = `<div class="latest-info">加载中...</div>`;
             }
 
-            // 最大跌幅HTML
-            let maxDropHtml = '';
-            if (!isError && !isLoading) {
-                const riskClass = isHighRisk ? 'high-risk' : '';
-                const riskText = isHighRisk ? ' 🔴 高风险' : '';
-                maxDropHtml = `
-                    <div class="max-drop-rate ${riskClass}">
-                        前15日最大跌幅: ${maxDropRate}%${riskText}
-                    </div>
-                `;
-            }
-
-            // 涨幅数据HTML
+            // 涨幅率
             let ratesHtml = '';
-            if (isLoading) {
-                ratesHtml = `<div style="text-align:center;padding:16px;color:#4b587c;">数据加载中 <span class="loading-dot"></span><span class="loading-dot" style="animation-delay:0.2s"></span><span class="loading-dot" style="animation-delay:0.4s"></span></div>`;
-            } else if (isError) {
-                ratesHtml = `<div class="error-placeholder">⚠️ 加载失败 (可能代码无效或网络问题)</div>`;
-            } else if (rates.length > 0) {
+            if (netWorth) {
+                const rates = computeRates(netWorth);
                 let items = '';
                 PERIODS.forEach((period, idx) => {
                     const val = rates[idx];
-                    let valueStr = '——';
-                    let cls = 'neutral';
+                    let valueStr = '——', cls = 'neutral';
                     if (val !== null) {
                         valueStr = val.toFixed(2) + '%';
-                        if (val > 0) cls = 'positive';
-                        else if (val < 0) cls = 'negative';
-                        else cls = 'neutral';
+                        cls = val > 0 ? 'positive' : (val < 0 ? 'negative' : 'neutral');
                     }
-                    items += `
-                        <div class="rate-item">
-                            <div class="rate-label">${period}日</div>
-                            <div class="rate-value ${cls}">${valueStr}</div>
-                        </div>
-                    `;
+                    items += `<div class="rate-item"><div class="rate-label">${period}D</div><div class="rate-value ${cls}">${valueStr}</div></div>`;
                 });
                 ratesHtml = `<div class="rates-grid">${items}</div>`;
-            } else {
-                ratesHtml = `<div class="error-placeholder">净值数据不足</div>`;
+            } else if (isError) {
+                ratesHtml = `<div class="error-placeholder">加载失败</div>`;
             }
 
-            const displayName = (typeof name === 'string' && name !== code) ? name : code;
-            const shortName = displayName.length > 22 ? displayName.slice(0, 20) + '…' : displayName;
-            const cardClass = isHighRisk ? 'card high-risk' : 'card';
+            const riskTag = riskFlag ? '<span class="risk-tag">⚠️ 跌幅大</span>' : '';
 
             html += `
-                <div class="${cardClass}" data-code="${code}">
+                <div class="card ${riskFlag ? 'risk-highlight' : ''}" data-code="${code}">
                     <div class="card-header">
-                        <div class="fund-title" title="${displayName}">${shortName}</div>
+                        <div class="fund-title" title="${name}">${name.length > 18 ? name.slice(0,16)+'…' : name}</div>
                         <span class="fund-code">${code}</span>
-                        <button class="delete-btn" data-code="${code}" title="删除此基金">✕</button>
+                        <button class="delete-btn" data-code="${code}" title="删除">✕</button>
                     </div>
-                    ${netWorthHtml}
+                    ${latestHtml}
                     ${ratesHtml}
-                    ${maxDropHtml}
+                    ${riskTag}
                 </div>
             `;
         }
 
-        cardContainer.innerHTML = html;
+        container.innerHTML = html;
 
-        // 绑定删除按钮事件
+        // 绑定删除事件
         document.querySelectorAll('.delete-btn').forEach(btn => {
             btn.addEventListener('click', (e) => {
                 e.stopPropagation();
@@ -1029,358 +848,185 @@
             });
         });
 
-        // 绑定卡片点击事件（查看曲线）
+        // 绑定卡片点击（显示曲线）
         document.querySelectorAll('.card').forEach(card => {
             card.addEventListener('click', (e) => {
-                // 排除删除按钮
-                if (e.target.closest('.delete-btn')) return;
-                
+                // 如果点击的是删除按钮，不触发
+                if (e.target.classList.contains('delete-btn')) return;
                 const code = card.getAttribute('data-code');
-                const fund = fundsData.find(f => f.code === code);
-                if (fund && fund.netWorth) {
-                    openChartModal(fund);
-                }
+                if (code) showFundChart(code);
             });
         });
     }
 
-    // --- 图表相关函数 ---
-    // 打开图表模态框
-    function openChartModal(fund) {
-        currentFundData = fund;
-        modalTitle.textContent = `${fund.name} (${fund.code}) 涨跌曲线`;
-        
-        // 初始化图表
-        renderChart(15);
-        
-        // 显示模态框
-        fundChartModal.style.display = 'flex';
-        
-        // 重置周期按钮状态
-        chartPeriodBtns.forEach(btn => {
-            btn.classList.remove('active');
-            if (btn.dataset.days === '15') {
-                btn.classList.add('active');
-            }
-        });
+    // 删除基金
+    function deleteFund(code) {
+        const group = appData.groups.find(g => g.id === currentGroupId);
+        if (group) {
+            group.fundCodes = group.fundCodes.filter(c => c !== code);
+            saveAppData();
+            renderCards();
+            renderGroups(); // 更新分组标记
+        }
     }
 
-    // 关闭图表模态框
-    function closeChartModal() {
-        fundChartModal.style.display = 'none';
-        if (currentChart) {
-            currentChart.destroy();
-            currentChart = null;
+    // 添加基金
+    async function addFund() {
+        const codeInput = document.getElementById('fundCodeInput');
+        const groupSelect = document.getElementById('groupSelect');
+        const code = codeInput.value.trim();
+        if (!/^\d+$/.test(code)) { alert('请输入纯数字基金代码'); return; }
+
+        const targetGroupId = groupSelect.value;
+        const targetGroup = appData.groups.find(g => g.id === targetGroupId);
+        if (!targetGroup) return;
+
+        // 检查是否已存在（在所有分组中）
+        const exists = appData.groups.some(g => g.fundCodes.includes(code));
+        if (exists) { alert('该基金已存在于某个分组'); return; }
+
+        // 验证基金有效性
+        try {
+            addBtn.disabled = true;
+            addBtn.textContent = '验证中...';
+            await loadFundData(code, true);
+        } catch (e) {
+            alert(`无效基金代码: ${e.message}`);
+            addBtn.disabled = false;
+            addBtn.textContent = '➕ 添加';
+            return;
+        } finally {
+            addBtn.disabled = false;
+            addBtn.textContent = '➕ 添加';
         }
-        currentFundData = null;
+
+        targetGroup.fundCodes.push(code);
+        saveAppData();
+        codeInput.value = '';
+        renderCards();
+        renderGroups();
     }
 
-    // 渲染图表
-    function renderChart(days) {
-        if (!currentFundData || !currentFundData.netWorth) return;
-        
-        // 销毁旧图表
-        if (currentChart) {
-            currentChart.destroy();
-        }
-        
-        // 获取指定天数的净值数据
-        const data = getNetWorthInDays(currentFundData.netWorth, days);
-        if (data.length === 0) {
-            fundChart.innerHTML = '<div style="text-align:center; padding: 40px;">暂无足够数据</div>';
+    // ---------- 曲线模态框 ----------
+    function showFundChart(code) {
+        const fund = appData.fundsCache[code];
+        if (!fund || !fund.netWorth) {
+            alert('基金数据尚未加载完成');
             return;
         }
-        
-        // 准备图表数据
-        const labels = data.map(item => formatDate(item.date));
-        const values = data.map(item => item.value);
-        
-        // 计算涨跌率（相对于第一天）
-        const baseValue = values[0];
-        const changeRates = values.map(v => parseFloat(((v - baseValue) / baseValue * 100).toFixed(2)));
-        
-        // 创建图表
-        currentChart = new Chart(fundChart, {
+        currentModalFund = fund;
+        document.getElementById('modalFundName').textContent = fund.name + ' (' + code + ')';
+        document.getElementById('chartModal').classList.add('active');
+        // 默认15日
+        drawChart(15);
+    }
+
+    function drawChart(days) {
+        if (!currentModalFund || !currentModalFund.netWorth) return;
+        const netWorth = currentModalFund.netWorth;
+        // 按日期升序 (旧到新)
+        const sorted = [...netWorth].sort((a,b) => new Date(a.x) - new Date(b.x));
+        const latest = sorted[sorted.length-1].y;
+        // 取最近days个点 (若不足则全部)
+        const slice = sorted.slice(-days);
+        const labels = slice.map(d => d.x);
+        // 计算相对于第一个点的累计收益率？或者直接显示净值？我们显示涨跌率，即相对于第一个点的收益率？
+        // 题目要求“近15天、30天、60天、90天自然日的涨跌率曲线”，应该显示每天的涨跌率（相对于前一日）？还是累计？通常曲线是累计收益率。
+        // 为了直观，我们显示累计收益率，以起始日为基准0%。
+        const startY = slice[0]?.y || 1;
+        const returns = slice.map(d => ((d.y / startY) - 1) * 100);
+
+        const ctx = document.getElementById('fundChart').getContext('2d');
+        if (chartInstance) chartInstance.destroy();
+
+        chartInstance = new Chart(ctx, {
             type: 'line',
             data: {
                 labels: labels,
                 datasets: [{
-                    label: '净值',
-                    data: values,
+                    label: '累计涨跌率 (%)',
+                    data: returns,
                     borderColor: '#3b82f6',
-                    backgroundColor: 'rgba(59, 130, 246, 0.1)',
-                    fill: true,
-                    tension: 0.4,
-                    yAxisID: 'y'
-                }, {
-                    label: '涨跌率 (%)',
-                    data: changeRates,
-                    borderColor: '#f87171',
-                    backgroundColor: 'rgba(248, 113, 113, 0.1)',
-                    fill: true,
-                    tension: 0.4,
-                    yAxisID: 'y1'
+                    tension: 0.1,
+                    fill: false
                 }]
             },
             options: {
                 responsive: true,
                 maintainAspectRatio: false,
-                interaction: {
-                    mode: 'index',
-                    intersect: false,
-                },
-                scales: {
-                    y: {
-                        type: 'linear',
-                        display: true,
-                        position: 'left',
-                        title: {
-                            display: true,
-                            text: '净值'
-                        }
-                    },
-                    y1: {
-                        type: 'linear',
-                        display: true,
-                        position: 'right',
-                        title: {
-                            display: true,
-                            text: '涨跌率 (%)'
-                        },
-                        grid: {
-                            drawOnChartArea: false,
-                        }
-                    }
-                },
                 plugins: {
-                    tooltip: {
-                        callbacks: {
-                            label: function(context) {
-                                if (context.datasetIndex === 0) {
-                                    return `净值: ${context.raw.toFixed(4)}`;
-                                } else {
-                                    return `涨跌率: ${context.raw}%`;
-                                }
-                            }
-                        }
-                    }
+                    tooltip: { callbacks: { label: (ctx) => ctx.raw.toFixed(2) + '%' } }
                 }
             }
         });
     }
 
-    // --- 基金管理函数 ---
-    // 加载当前分组的所有基金
-    async function loadAllFunds() {
-        const seq = ++currentLoadSeq;
-        const currentGroup = groups.find(g => g.id === currentGroupId);
-        const codes = currentGroup ? currentGroup.funds : [];
-
-        fundsData = codes.map(code => ({
-            code,
-            name: '加载中...',
-            netWorth: null,
-            error: false,
-            latestNetWorth: 0,
-            dailyChange: 0,
-            maxDropRate: 0
-        }));
-        renderCards();
-
-        for (let i = 0; i < codes.length; i++) {
-            const code = codes[i];
-            try {
-                const data = await loadFundData(code);
-                if (seq !== currentLoadSeq) return;
-                fundsData[i] = {
-                    code: data.code,
-                    name: data.name,
-                    netWorth: data.netWorth,
-                    error: false,
-                    latestNetWorth: data.latestNetWorth,
-                    dailyChange: data.dailyChange,
-                    maxDropRate: data.maxDropRate
-                };
-            } catch (err) {
-                if (seq !== currentLoadSeq) return;
-                fundsData[i] = {
-                    code,
-                    name: `错误: ${code}`,
-                    netWorth: null,
-                    error: true,
-                    latestNetWorth: 0,
-                    dailyChange: 0,
-                    maxDropRate: 0
-                };
-            }
-            renderCards();
-        }
-    }
-
-    // 添加基金到当前分组
-    async function addFund() {
-        const rawCode = fundCodeInput.value.trim();
-        if (!rawCode) {
-            alert('请输入基金代码');
-            return;
-        }
-        if (!/^\d+$/.test(rawCode)) {
-            alert('基金代码应为纯数字');
-            return;
-        }
-
-        const currentGroup = groups.find(g => g.id === currentGroupId);
-        if (!currentGroup) {
-            alert('请先选择一个分组');
-            return;
-        }
-
-        if (currentGroup.funds.includes(rawCode)) {
-            alert('该基金已在当前分组中');
-            fundCodeInput.value = '';
-            return;
-        }
-
-        let isValid = false;
-        try {
-            addBtn.disabled = true;
-            addBtn.textContent = '验证中...';
-            await loadFundData(rawCode);
-            isValid = true;
-        } catch (e) {
-            alert(`无法添加：${e.message}，请检查代码是否正确`);
-        } finally {
-            addBtn.disabled = false;
-            addBtn.textContent = '➕ 添加基金';
-        }
-
-        if (!isValid) return;
-
-        // 更新分组数据
-        const newGroups = groups.map(g => {
-            if (g.id === currentGroupId) {
-                return {
-                    ...g,
-                    funds: [...g.funds, rawCode]
-                };
-            }
-            return g;
-        });
-
-        setStoredFunds(newGroups);
-        fundCodeInput.value = '';
-        await loadAllFunds();
-        showSyncStatus('已添加到云端', 2000);
-    }
-
-    // 从当前分组删除基金
-    function deleteFund(code) {
-        const newGroups = groups.map(g => {
-            if (g.id === currentGroupId) {
-                return {
-                    ...g,
-                    funds: g.funds.filter(c => c !== code)
-                };
-            }
-            return g;
-        });
-
-        setStoredFunds(newGroups);
-        loadAllFunds();
-        showSyncStatus('已从云端删除', 2000);
-    }
-
-    // --- 初始化函数 ---
+    // ---------- 初始化与云端同步 ----------
     async function init() {
-        // 显示加载状态
-        if (cardContainer) {
-            cardContainer.innerHTML = '<div class="empty-state"><div style="font-size:48px;">☁️</div><p>正在从云端同步...</p></div>';
-        }
-
-        try {
-            // 加载分组数据
-            groups = getStoredGroups();
-            
-            // 从云端同步
-            if (s3) {
-                const cloudGroups = await loadFromCloud();
-                if (cloudGroups && Array.isArray(cloudGroups) && cloudGroups.length > 0) {
-                    groups = cloudGroups;
-                    localStorage.setItem(STORAGE_KEY, JSON.stringify(groups));
-                    showSyncStatus('✅ 已从云端同步', 2000);
-                } else {
-                    // 本地数据备份到云端
-                    await saveToCloud(groups);
-                    showSyncStatus('📤 已备份本地数据到云端', 2000);
+        // 先尝试从云端加载
+        if (s3) {
+            try {
+                const cloudData = await loadFromCloud();
+                if (cloudData && cloudData.groups) {
+                    appData = cloudData;
+                    localStorage.setItem(STORAGE_KEY, JSON.stringify(appData));
                 }
-            } else {
-                console.warn('S3未初始化，仅使用本地存储');
-                showSyncStatus('⚠️ 云端不可用，使用本地数据', 3000);
+            } catch (e) {
+                console.warn('cloud load failed, use local', e);
             }
-        } catch (error) {
-            console.error('云端同步失败，使用本地数据', error);
-            showSyncStatus('❌ 云端同步失败，使用本地', 3000);
         }
+        // 加载本地数据（可能被云端覆盖）
+        loadAppData();
 
-        // 初始化分组选择器
-        renderGroupSelect();
+        // 渲染分组和卡片
+        renderGroups();
+        await renderCards();
 
         // 事件绑定
-        // 分组相关
-        addGroupBtn.addEventListener('click', addNewGroup);
-        deleteGroupBtn.addEventListener('click', deleteCurrentGroup);
-        groupSelect.addEventListener('change', changeGroup);
-
-        // 基金添加相关
-        addBtn.addEventListener('click', addFund);
-        fundCodeInput.addEventListener('keypress', (e) => {
-            if (e.key === 'Enter') {
-                e.preventDefault();
-                addFund();
-            }
-        });
-        fundCodeInput.addEventListener('input', (e) => {
-            e.target.value = e.target.value.replace(/[^\d]/g, '');
-        });
-
-        // 同步按钮
-        syncToCloudBtn.addEventListener('click', async () => {
-            syncStatus.textContent = '同步中...';
+        document.getElementById('addFundBtn').addEventListener('click', addFund);
+        document.getElementById('syncToCloudBtn').addEventListener('click', async () => {
+            const status = document.getElementById('syncStatus');
+            status.textContent = '同步中...';
             try {
-                await saveToCloud(groups);
-                syncStatus.textContent = '✅ 同步成功';
-                setTimeout(() => { syncStatus.textContent = ''; }, 2000);
+                await saveToCloud(appData);
+                status.textContent = '✅ 同步成功';
+                setTimeout(() => status.textContent = '', 2000);
             } catch (e) {
-                syncStatus.textContent = '❌ 同步失败';
-                console.error(e);
-                setTimeout(() => { syncStatus.textContent = ''; }, 2000);
+                status.textContent = '❌ 失败';
+                setTimeout(() => status.textContent = '', 2000);
             }
         });
 
-        // 模态框相关
-        modalCloseBtn.addEventListener('click', closeChartModal);
-        fundChartModal.addEventListener('click', (e) => {
-            if (e.target === fundChartModal) {
-                closeChartModal();
+        // 模态框关闭
+        document.getElementById('closeModalBtn').addEventListener('click', () => {
+            document.getElementById('chartModal').classList.remove('active');
+        });
+        // 点击模态框背景关闭
+        document.getElementById('chartModal').addEventListener('click', (e) => {
+            if (e.target.classList.contains('modal')) {
+                document.getElementById('chartModal').classList.remove('active');
             }
         });
 
-        // 图表周期切换
-        chartPeriodBtns.forEach(btn => {
+        // 周期切换
+        document.querySelectorAll('.period-btn').forEach(btn => {
             btn.addEventListener('click', () => {
-                chartPeriodBtns.forEach(b => b.classList.remove('active'));
+                document.querySelectorAll('.period-btn').forEach(b => b.classList.remove('active'));
                 btn.classList.add('active');
-                const days = parseInt(btn.dataset.days);
-                renderChart(days);
+                const days = parseInt(btn.getAttribute('data-days'), 10);
+                drawChart(days);
             });
+        });
+
+        // 输入框只能数字
+        document.getElementById('fundCodeInput').addEventListener('input', (e) => {
+            e.target.value = e.target.value.replace(/\D/g, '');
         });
     }
 
-    // 启动应用
     init();
 })();
 </script>
-<!-- 重要提示：请确保在 Cloudflare R2 存储桶中配置了 CORS 策略，允许您的域名访问。 -->
-<!-- CORS 配置示例：[{"AllowedOrigins":["*"],"AllowedMethods":["GET","PUT","DELETE","HEAD"],"AllowedHeaders":["*"],"MaxAgeSeconds":3000}] -->
+<!-- 重要：请确保R2存储桶CORS已配置您的域名 -->
 </body>
 </html>
