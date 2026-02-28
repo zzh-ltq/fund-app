@@ -331,6 +331,12 @@
             font-weight: 600;
             margin-left: 4px;
         }
+        .latest-info .change.positive { 
+            color: #ef4444; 
+        }
+        .latest-info .change.negative { 
+            color: #16a34a; 
+        }
 
         /* 涨幅网格优化 */
         .rates-grid { 
@@ -566,6 +572,14 @@
         }
         tr:hover td {
             background: #f8faff;
+        }
+        td.positive { 
+            color: #ef4444; 
+            font-weight: 500;
+        }
+        td.negative { 
+            color: #16a34a; 
+            font-weight: 500;
         }
 
         /* 同步区域优化 */
@@ -903,9 +917,20 @@
         document.getElementById('addGroupBtn')?.addEventListener('click', () => {
             const newName = prompt('新分组名称', '新分组');
             if (newName?.trim()) {
+                // 优化1：检查是否存在相同名称的分组
+                const isNameExists = appData.groups.some(group => 
+                    group.name.trim() === newName.trim()
+                );
+                
+                if (isNameExists) {
+                    showToast('分组名称已存在，请使用其他名称');
+                    return;
+                }
+                
                 const newId = 'group_' + Date.now() + '_' + Math.random().toString(36).substr(2, 6);
                 appData.groups.push({ id: newId, name: newName.trim(), fundCodes: [] });
                 saveAppData(); renderGroups();
+                showToast('分组创建成功');
             }
         });
     }
@@ -1076,11 +1101,19 @@
         const fromGroup = appData.groups.find(g => g.id === fromGroupId);
         const toGroup = appData.groups.find(g => g.id === toGroupId);
         if (!fromGroup || !toGroup || fromGroupId === toGroupId) return;
+        
+        // 优化2：检查目标分组是否已存在该基金
+        if (toGroup.fundCodes.includes(code)) {
+            showToast('该基金已存在于目标分组中');
+            return;
+        }
+        
         fromGroup.fundCodes = fromGroup.fundCodes.filter(c => c !== code);
         toGroup.fundCodes.push(code);
         saveAppData();
         if (currentGroupId === fromGroupId || currentGroupId === toGroupId) renderCards();
         renderGroups();
+        showToast('基金移动成功');
     }
 
     // 渲染卡片
@@ -1135,6 +1168,7 @@
             if (netWorth) {
                 const { date, value, change } = getLatestInfo(netWorth);
                 const changeStr = change !== null ? (change > 0 ? `+${change.toFixed(2)}%` : `${change.toFixed(2)}%`) : '--';
+                // 优化3：为日涨跌幅添加红绿色显示
                 const changeClass = change > 0 ? 'positive' : (change < 0 ? 'negative' : '');
                 latestHtml = `
                     <div class="latest-info">
@@ -1254,24 +1288,7 @@
         const groupSelect = document.getElementById('groupSelect');
         const code = codeInput.value.trim();
         if (!/^\d+$/.test(code)) { 
-            // iOS友好的提示（避免alert的突兀）
-            const alertDiv = document.createElement('div');
-            alertDiv.style.cssText = `
-                position: fixed;
-                top: 50%;
-                left: 50%;
-                transform: translate(-50%, -50%);
-                background: rgba(0,0,0,0.8);
-                color: white;
-                padding: 16px 24px;
-                border-radius: 12px;
-                font-size: 0.9rem;
-                z-index: 2000;
-                text-align: center;
-            `;
-            alertDiv.textContent = '请输入纯数字基金代码';
-            document.body.appendChild(alertDiv);
-            setTimeout(() => alertDiv.remove(), 2000);
+            showToast('请输入纯数字基金代码');
             return; 
         }
 
@@ -1279,25 +1296,9 @@
         const targetGroup = appData.groups.find(g => g.id === targetGroupId);
         if (!targetGroup) return;
 
-        // 检查是否已添加
+        // 优化2：检查是否已添加
         if (targetGroup.fundCodes.includes(code)) {
-            const alertDiv = document.createElement('div');
-            alertDiv.style.cssText = `
-                position: fixed;
-                top: 50%;
-                left: 50%;
-                transform: translate(-50%, -50%);
-                background: rgba(0,0,0,0.8);
-                color: white;
-                padding: 16px 24px;
-                border-radius: 12px;
-                font-size: 0.9rem;
-                z-index: 2000;
-                text-align: center;
-            `;
-            alertDiv.textContent = '该基金已添加到分组中';
-            document.body.appendChild(alertDiv);
-            setTimeout(() => alertDiv.remove(), 2000);
+            showToast('该基金已添加到分组中');
             return;
         }
 
@@ -1314,46 +1315,14 @@
             await loadFundData(code, true);
             codeInput.value = '';
             
-            // 添加成功提示
-            const successDiv = document.createElement('div');
-            successDiv.style.cssText = `
-                position: fixed;
-                top: 20px;
-                left: 50%;
-                transform: translateX(-50%);
-                background: rgba(46, 125, 94, 0.9);
-                color: white;
-                padding: 12px 24px;
-                border-radius: 8px;
-                font-size: 0.9rem;
-                z-index: 2000;
-            `;
-            successDiv.textContent = '添加成功 ✅';
-            document.body.appendChild(successDiv);
-            setTimeout(() => successDiv.remove(), 2000);
+            showToast('添加成功 ✅');
 
         } catch (e) {
             // 移除失败的基金
             targetGroup.fundCodes = targetGroup.fundCodes.filter(c => c !== code);
             saveAppData();
             
-            const errorDiv = document.createElement('div');
-            errorDiv.style.cssText = `
-                position: fixed;
-                top: 50%;
-                left: 50%;
-                transform: translate(-50%, -50%);
-                background: rgba(0,0,0,0.8);
-                color: white;
-                padding: 16px 24px;
-                border-radius: 12px;
-                font-size: 0.9rem;
-                z-index: 2000;
-                text-align: center;
-            `;
-            errorDiv.textContent = `无效基金代码: ${e.message}`;
-            document.body.appendChild(errorDiv);
-            setTimeout(() => errorDiv.remove(), 2000);
+            showToast(`无效基金代码: ${e.message}`);
         } finally {
             addBtn.disabled = false;
             addBtn.textContent = '➕ 添加';
@@ -1364,23 +1333,7 @@
     function showFundChart(code) {
         const fund = appData.fundsCache[code];
         if (!fund?.netWorth) { 
-            const alertDiv = document.createElement('div');
-            alertDiv.style.cssText = `
-                position: fixed;
-                top: 50%;
-                left: 50%;
-                transform: translate(-50%, -50%);
-                background: rgba(0,0,0,0.8);
-                color: white;
-                padding: 16px 24px;
-                border-radius: 12px;
-                font-size: 0.9rem;
-                z-index: 2000;
-                text-align: center;
-            `;
-            alertDiv.textContent = '数据未就绪';
-            document.body.appendChild(alertDiv);
-            setTimeout(() => alertDiv.remove(), 2000);
+            showToast('数据未就绪');
             return; 
         }
         currentModalFund = fund;
@@ -1493,12 +1446,36 @@
             const prev = (i < slice.length - 1) ? slice[i+1] : null;
             const change = prev ? ((item.y / prev.y) - 1) * 100 : null;
             const changeStr = change !== null ? (change > 0 ? `+${change.toFixed(2)}%` : `${change.toFixed(2)}%`) : '--';
+            // 优化3：为表格中的日涨跌幅添加红绿色显示
             const changeClass = change > 0 ? 'positive' : (change < 0 ? 'negative' : '');
             const displayDate = formatDate(item.x); // 转换日期
             tableHtml += `<tr><td>${displayDate}</td><td>${item.y.toFixed(4)}</td><td class="${changeClass}">${changeStr}</td></tr>`;
         }
         tableHtml += '</tbody></table>';
         document.getElementById('netWorthTable').innerHTML = tableHtml;
+    }
+
+    // 显示提示消息
+    function showToast(message) {
+        const toastDiv = document.createElement('div');
+        toastDiv.style.cssText = `
+            position: fixed;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            background: rgba(0,0,0,0.8);
+            color: white;
+            padding: 16px 24px;
+            border-radius: 12px;
+            font-size: 0.9rem;
+            z-index: 2000;
+            text-align: center;
+            backdrop-filter: blur(4px);
+            -webkit-backdrop-filter: blur(4px);
+        `;
+        toastDiv.textContent = message;
+        document.body.appendChild(toastDiv);
+        setTimeout(() => toastDiv.remove(), 2000);
     }
 
     // 初始化
@@ -1569,7 +1546,7 @@
             });
         });
 
-         // 输入框仅允许数字（iOS键盘优化）
+        // 输入框仅允许数字
         document.getElementById('fundCodeInput').addEventListener('input', (e) => {
             e.target.value = e.target.value.replace(/\D/g, '');
         });
