@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.5">
-    <title>基金涨幅卡 · 分组版（性能优化）</title>
+    <title>基金涨幅卡 · 分组版（日期修复）</title>
     <!-- Chart.js 轻量绘图 -->
     <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
     <!-- AWS SDK for R2 -->
@@ -79,7 +79,7 @@
         <span class="sync-status" id="syncStatus"></span>
     </div>
     <div class="footer-note">
-        ✨ 点击卡片查看15/30/60/90日曲线 · 数据已优化，流畅运行
+        ✨ 点击卡片查看15/30/60/90日曲线 · 日期已标准化
     </div>
 </div>
 
@@ -132,6 +132,29 @@
     let currentGroupId = 'default';
     let chartInstance = null;
     let currentModalFund = null;
+
+    // ---------- 辅助函数：格式化日期为 YYYY-MM-DD ----------
+    function formatDate(dateInput) {
+        if (!dateInput) return '';
+        // 如果已经是字符串且符合 YYYY-MM-DD，直接返回
+        if (typeof dateInput === 'string' && /^\d{4}-\d{2}-\d{2}$/.test(dateInput)) {
+            return dateInput;
+        }
+        // 尝试转换为数字（处理时间戳字符串或数字）
+        let timestamp = Number(dateInput);
+        if (!isNaN(timestamp) && timestamp > 0) {
+            const d = new Date(timestamp);
+            if (!isNaN(d.getTime())) {
+                return d.toISOString().split('T')[0];
+            }
+        }
+        // 最后尝试直接解析字符串
+        const d = new Date(dateInput);
+        if (!isNaN(d.getTime())) {
+            return d.toISOString().split('T')[0];
+        }
+        return String(dateInput); // 保底
+    }
 
     // ---------- 本地存储 ----------
     function loadAppData() {
@@ -242,7 +265,7 @@
         });
     }
 
-    // ---------- 基金数据加载（优化：只保留最近120点）----------
+    // ---------- 基金数据加载（优化：只保留最近120点，并格式化日期）----------
     async function loadFundData(code, forceRefresh = false) {
         if (!forceRefresh && appData.fundsCache[code]?.netWorth) {
             return appData.fundsCache[code];
@@ -263,7 +286,10 @@
                     let netWorth = null;
                     if (window.Data_netWorthTrend && Array.isArray(window.Data_netWorthTrend)) {
                         // 原始数据可能无序，先转为对象数组
-                        netWorth = window.Data_netWorthTrend.map(item => ({ x: item.x, y: item.y }));
+                        netWorth = window.Data_netWorthTrend.map(item => ({
+                            x: formatDate(item.x), // 格式化日期
+                            y: item.y
+                        }));
                         // 按日期升序（旧到新）
                         netWorth.sort((a, b) => new Date(a.x) - new Date(b.x));
                         // 只保留最近 MAX_HISTORY_POINTS 个点
@@ -307,13 +333,15 @@
         return minReturn;
     }
 
-    // 获取最新净值信息
+    // 获取最新净值信息（日期已确保是字符串）
     function getLatestInfo(netWorth) {
         if (!netWorth || netWorth.length === 0) return { date: '', value: 0, change: null };
         const latest = netWorth[netWorth.length - 1];
         const prev = netWorth.length > 1 ? netWorth[netWorth.length - 2] : null;
         const change = prev ? ((latest.y / prev.y) - 1) * 100 : null;
-        return { date: latest.x, value: latest.y, change };
+        // 确保日期是字符串（二次保险）
+        const dateStr = formatDate(latest.x);
+        return { date: dateStr, value: latest.y, change };
     }
 
     // 计算周期涨幅（netWorth升序）
@@ -485,9 +513,9 @@
 
     function drawChart(days) {
         if (!currentModalFund?.netWorth) return;
-        const netWorth = currentModalFund.netWorth; // 已是升序
+        const netWorth = currentModalFund.netWorth; // 已是升序，且日期已格式化
         const slice = netWorth.slice(-days);
-        const labels = slice.map(d => d.x);
+        const labels = slice.map(d => d.x); // 日期已经是 YYYY-MM-DD
         const startY = slice[0]?.y || 1;
         const returns = slice.map(d => ((d.y / startY) - 1) * 100);
 
