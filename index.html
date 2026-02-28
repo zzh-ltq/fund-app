@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.5">
-    <title>基金涨幅卡 · 分组版</title>
+    <title>基金涨幅卡 · 分组版（修复）</title>
     <!-- Chart.js 轻量绘图 -->
     <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
     <!-- AWS SDK for R2 (保留原同步逻辑) -->
@@ -36,7 +36,7 @@
         }
         h1 {
             margin: 0 0 8px 0;
-            font-size: 1.8rem; /* 略调小 */
+            font-size: 1.8rem;
             font-weight: 600;
             letter-spacing: -0.02em;
             color: #0b1b32;
@@ -142,7 +142,7 @@
         }
         .input-wrapper input {
             width: 100%;
-            padding: 14px 18px; /* 略微调小 */
+            padding: 14px 18px;
             border: 1.5px solid #e1e6f0;
             border-radius: 44px;
             font-size: 0.95rem;
@@ -196,7 +196,7 @@
             gap: 18px;
             margin-top: 20px;
         }
-        /* 卡片样式 - 字体调小2号 (原1.2rem标题改为1rem, 其他相应调整) */
+        /* 卡片样式 - 字体调小2号 */
         .card {
             background: white;
             border-radius: 24px;
@@ -207,7 +207,7 @@
             backdrop-filter: blur(2px);
             display: flex;
             flex-direction: column;
-            cursor: pointer; /* 点击卡片弹出曲线 */
+            cursor: pointer;
             position: relative;
         }
         .card.risk-highlight {
@@ -222,14 +222,14 @@
         }
         .fund-title {
             font-weight: 700;
-            font-size: 1rem; /* 调小 */
+            font-size: 1rem;
             line-height: 1.4;
             color: #0b1b32;
             word-break: break-word;
             max-width: 65%;
         }
         .fund-code {
-            font-size: 0.7rem; /* 调小 */
+            font-size: 0.7rem;
             background: #eef2f9;
             padding: 3px 8px;
             border-radius: 40px;
@@ -260,7 +260,7 @@
         .latest-info {
             display: flex;
             justify-content: space-between;
-            font-size: 0.75rem; /* 调小 */
+            font-size: 0.75rem;
             color: #4b587c;
             margin-bottom: 8px;
             background: #f8faff;
@@ -295,14 +295,14 @@
             text-align: center;
         }
         .rate-label {
-            font-size: 0.6rem; /* 调小 */
+            font-size: 0.6rem;
             text-transform: uppercase;
             color: #5c6b93;
             letter-spacing: 0.3px;
             font-weight: 500;
         }
         .rate-value {
-            font-size: 1rem; /* 调小 */
+            font-size: 1rem;
             font-weight: 600;
             margin-top: 2px;
         }
@@ -416,9 +416,7 @@
         <div class="sub">近3/5/7/10/15日涨幅 · 最新净值 · 15日最大跌幅≥8.5%高亮</div>
         
         <!-- 分组标签栏 -->
-        <div class="group-tabs" id="groupTabs">
-            <!-- 由JS动态渲染 -->
-        </div>
+        <div class="group-tabs" id="groupTabs"></div>
 
         <!-- 添加基金区域 -->
         <div class="add-area">
@@ -627,11 +625,12 @@
                 const gid = btn.getAttribute('data-group-id');
                 if (gid && gid !== 'default') {
                     if (confirm(`删除分组「${appData.groups.find(g=>g.id===gid)?.name}”，其下的基金将移至默认分组`)) {
-                        // 移动基金到默认分组
+                        // 移动基金到默认分组，并去重
                         const defaultGroup = appData.groups.find(g => g.id === 'default');
                         const delGroup = appData.groups.find(g => g.id === gid);
                         if (defaultGroup && delGroup) {
-                            defaultGroup.fundCodes.push(...delGroup.fundCodes);
+                            // 合并并去重
+                            defaultGroup.fundCodes = [...new Set([...defaultGroup.fundCodes, ...delGroup.fundCodes])];
                             appData.groups = appData.groups.filter(g => g.id !== gid);
                             if (currentGroupId === gid) currentGroupId = 'default';
                             saveAppData();
@@ -870,8 +869,10 @@
         }
     }
 
-    // 添加基金
+    // 添加基金（修复版）
     async function addFund() {
+        // 在函数内部获取按钮元素，避免作用域问题
+        const addBtn = document.getElementById('addFundBtn');
         const codeInput = document.getElementById('fundCodeInput');
         const groupSelect = document.getElementById('groupSelect');
         const code = codeInput.value.trim();
@@ -903,7 +904,8 @@
         targetGroup.fundCodes.push(code);
         saveAppData();
         codeInput.value = '';
-        renderCards();
+        // 重新渲染当前分组卡片和分组标签（以更新风险标记）
+        await renderCards();
         renderGroups();
     }
 
@@ -926,13 +928,9 @@
         const netWorth = currentModalFund.netWorth;
         // 按日期升序 (旧到新)
         const sorted = [...netWorth].sort((a,b) => new Date(a.x) - new Date(b.x));
-        const latest = sorted[sorted.length-1].y;
         // 取最近days个点 (若不足则全部)
         const slice = sorted.slice(-days);
         const labels = slice.map(d => d.x);
-        // 计算相对于第一个点的累计收益率？或者直接显示净值？我们显示涨跌率，即相对于第一个点的收益率？
-        // 题目要求“近15天、30天、60天、90天自然日的涨跌率曲线”，应该显示每天的涨跌率（相对于前一日）？还是累计？通常曲线是累计收益率。
-        // 为了直观，我们显示累计收益率，以起始日为基准0%。
         const startY = slice[0]?.y || 1;
         const returns = slice.map(d => ((d.y / startY) - 1) * 100);
 
