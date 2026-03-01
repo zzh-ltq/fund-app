@@ -311,22 +311,20 @@
             align-items: flex-start; 
             margin-bottom: 12px; 
         }
-        /* ========== 优化2：基金名称单行显示，超出再换行 ========== */
+        /* ========== 核心优化：基金名称完整两行显示 ========== */
         .fund-title { 
             font-weight: 600; 
             font-size: 0.95rem; 
             color: #0b1b32; 
-            max-width: 78%;
-            line-height: 1.4;
-            /* 先尝试单行显示 */
-            white-space: nowrap;
-            overflow: hidden;
-            text-overflow: ellipsis;
-            /* 如果需要支持换行，取消下面的注释 */
-            /* display: -webkit-box;
-            -webkit-line-clamp: 2;
+            max-width: 82%; /* 扩大显示宽度，给长名称更多空间 */
+            line-height: 1.35; /* 优化两行文字的行间距 */
+            /* 取消单行截断，启用两行完整显示 */
+            display: -webkit-box;
+            -webkit-line-clamp: 2; /* 最多2行，完整显示，无省略号 */
             -webkit-box-orient: vertical;
-            white-space: normal; */
+            overflow: hidden;
+            word-break: break-all; /* 中文自动换行，保证名称完整 */
+            white-space: normal;
         }
         .fund-code { 
             font-size: 0.7rem; 
@@ -351,7 +349,8 @@
             align-items: center;
             justify-content: center;
             transition: all 0.2s ease;
-            flex-shrink: 0;
+            flex-shrink: 0; /* 保证删除按钮不被挤压 */
+            margin-top: 2px; /* 对齐名称第一行 */
         }
         .delete-btn:hover {
             background: #fef2f2;
@@ -735,6 +734,11 @@
                 width: 100%;
                 justify-content: flex-end;
             }
+            /* 小屏适配名称宽度 */
+            .fund-title {
+                max-width: 80%;
+                font-size: 0.9rem;
+            }
         }
     </style>
 </head>
@@ -742,7 +746,7 @@
 <div class="container">
     <div class="header">
         <h1>📈 基金分组看板 <span>优化版</span></h1>
-        <div class="sub">15交易日累计涨跌幅计算 · 基金名称单行显示</div>
+        <div class="sub">基金名称完整显示 · 15交易日累计涨跌幅计算</div>
         
         <div class="group-tabs-wrapper">
             <div class="group-tabs" id="groupTabs"></div>
@@ -762,7 +766,7 @@
 
         <div class="add-area">
             <div class="input-wrapper">
-                <input type="text" id="fundCodeInput" placeholder="基金代码 (如 001773)" pattern="\d*" inputmode="numeric">
+                <input type="text" id="fundCodeInput" placeholder="基金代码 (如 017736)" pattern="\d*" inputmode="numeric">
             </div>
             <select id="groupSelect" class="group-select"></select>
             <button class="add-btn" id="addFundBtn">➕ 添加</button>
@@ -776,7 +780,7 @@
         <span class="sync-status" id="syncStatus"></span>
     </div>
     <div class="footer-note">
-        ✨ 点击卡片查看曲线 · 15交易日累计涨跌幅实时计算
+        ✨ 点击卡片查看曲线 · 基金名称完整两行显示
     </div>
 </div>
 
@@ -803,9 +807,8 @@
 <script>
 (function() {
     // ========== 核心配置 ==========
-    const STORAGE_KEY = 'funds_app_data_v2';
+    const STORAGE_KEY = 'funds_app_data_v3';
     const PERIODS = [3, 5, 7, 10, 15, 20];
-    // 优化1：15日跌幅阈值（跌幅 > 8.5% 触发警告）
     const DROP_THRESHOLD = -8.5;
     const DAILY_RISK_THRESHOLD = -5.0;
     const MAX_HISTORY_POINTS = 120;
@@ -919,12 +922,9 @@
         return ((end - start) / start * 100).toFixed(2);
     }
 
-    // ========== 优化1：计算15交易日累计涨跌幅（从第1天到最近一天的涨跌幅）==========
     function compute15DayChange(netWorth, days) {
         if (!netWorth || netWorth.length < days) return null;
-        // 取最近N个交易日
         const slice = netWorth.slice(-days);
-        // 计算从第1天到最后一天的累计涨跌幅
         const start = slice[0].y;
         const end = slice[slice.length - 1].y;
         const change = ((end - start) / start * 100).toFixed(2);
@@ -1025,7 +1025,7 @@
 
     async function loadFromCloud() {
         if (!s3) throw new Error('S3未初始化');
-        const params = { Bucket: R2_CONFIG.bucketName, Key: 'funds_app_data_v2.json' };
+        const params = { Bucket: R2_CONFIG.bucketName, Key: 'funds_app_data_v3.json' };
         try {
             const data = await s3.getObject(params).promise();
             return JSON.parse(data.Body.toString('utf-8'));
@@ -1039,7 +1039,7 @@
         if (!s3) return;
         await s3.putObject({
             Bucket: R2_CONFIG.bucketName,
-            Key: 'funds_app_data_v2.json',
+            Key: 'funds_app_data_v3.json',
             Body: JSON.stringify(data),
             ContentType: 'application/json'
         }).promise();
@@ -1055,7 +1055,6 @@
         appData.groups.forEach(group => {
             const isDefault = group.id === 'default';
             
-            // 优化1：15交易日累计跌幅风险判断
             const has15DRisk = group.fundCodes.some(code => {
                 const cached = appData.fundsCache[code];
                 if (!cached || !cached.netWorth) return false;
@@ -1175,7 +1174,6 @@
             const fund = appData.fundsCache[code];
             if (fund && !fund.error) {
                 const latestInfo = getLatestInfo(fund.netWorth);
-                // 优化1：计算15交易日累计涨跌幅
                 const change15D = compute15DayChange(fund.netWorth, MAX_DROP_PERIOD);
                 const isRisk = change15D !== null && parseFloat(change15D) <= DROP_THRESHOLD;
                 const isDailyRisk = latestInfo.change <= DAILY_RISK_THRESHOLD;
@@ -1193,10 +1191,8 @@
                 });
 
                 const changeClass = latestInfo.change !== null ? (latestInfo.change >= 0 ? 'positive' : 'negative') : '';
-                // 优化1：根据15日跌幅显示不同标签
                 const riskTag = isRisk ? '<span class="risk-tag">15日跌幅大</span>' : '';
                 const dailyRiskTag = isDailyRisk ? '<span class="daily-risk-tag">当日大跌</span>' : '';
-                // 优化1：显示15日累计涨跌幅数值
                 const change15DTag = change15D ? `<span class="maxdrop-tag">15日 ${change15D}%</span>` : '';
 
                 cardsHtml += `
@@ -1670,3 +1666,4 @@
 </script>
 </body>
 </html>
+                
