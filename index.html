@@ -286,7 +286,7 @@
             margin-top: 20px; 
         }
 
-        /* 卡片核心样式优化 */
+        /* 卡片核心样式 */
         .card { 
             background: linear-gradient(135deg, #ffffff 0%, #fafbff 100%);
             border-radius: 24px; 
@@ -311,18 +311,22 @@
             align-items: flex-start; 
             margin-bottom: 12px; 
         }
-        /* ========== 优化1：基金名称显示长度增加 ========== */
+        /* ========== 优化2：基金名称单行显示，超出再换行 ========== */
         .fund-title { 
             font-weight: 600; 
             font-size: 0.95rem; 
             color: #0b1b32; 
-            max-width: 78%; /* 从65%扩大到78%，增加显示宽度 */
-            line-height: 1.4; /* 调整行高适配两行 */
-            display: -webkit-box;
-            -webkit-line-clamp: 2; /* 最多显示2行，避免过长溢出 */
-            -webkit-box-orient: vertical;
+            max-width: 78%;
+            line-height: 1.4;
+            /* 先尝试单行显示 */
+            white-space: nowrap;
             overflow: hidden;
             text-overflow: ellipsis;
+            /* 如果需要支持换行，取消下面的注释 */
+            /* display: -webkit-box;
+            -webkit-line-clamp: 2;
+            -webkit-box-orient: vertical;
+            white-space: normal; */
         }
         .fund-code { 
             font-size: 0.7rem; 
@@ -384,7 +388,6 @@
             color: #16a34a; 
         }
 
-        /* ========== 优化2：适配20日涨幅，调整网格布局 ========== */
         .rates-grid { 
             display: flex; 
             flex-wrap: wrap; 
@@ -396,7 +399,7 @@
         }
         .rate-item { 
             flex: 1 0 auto; 
-            min-width: 44px; /* 缩小最小宽度，适配新增的20日 */
+            min-width: 44px;
             text-align: center; 
         }
         .rate-label { 
@@ -417,7 +420,6 @@
             color: #16a34a; 
         }
 
-        /* 标签样式优化，新增最大回撤显示 */
         .tag-group {
             display: flex;
             flex-wrap: wrap;
@@ -442,7 +444,6 @@
             display: inline-block;
             font-weight: 500;
         }
-        /* 新增15交易日最大回撤标签 */
         .maxdrop-tag {
             font-size: 0.7rem; 
             background: linear-gradient(135deg, #6366f1 0%, #4f46e5 100%);
@@ -740,8 +741,8 @@
 <body>
 <div class="container">
     <div class="header">
-        <h1>📈 基金分组看板 <span>UTC偏移方案</span></h1>
-        <div class="sub">天天基金UTC时间戳+8小时 · 准确显示交易日</div>
+        <h1>📈 基金分组看板 <span>优化版</span></h1>
+        <div class="sub">15交易日累计涨跌幅计算 · 基金名称单行显示</div>
         
         <div class="group-tabs-wrapper">
             <div class="group-tabs" id="groupTabs"></div>
@@ -754,7 +755,6 @@
                     <option value="7">7日累计涨幅</option>
                     <option value="10">10日累计涨幅</option>
                     <option value="15">15日累计涨幅</option>
-                    <!-- 优化2：新增20日涨幅排序选项 -->
                     <option value="20">20日累计涨幅</option>
                 </select>
             </div>
@@ -762,7 +762,7 @@
 
         <div class="add-area">
             <div class="input-wrapper">
-                <input type="text" id="fundCodeInput" placeholder="基金代码 (如 160119)" pattern="\d*" inputmode="numeric">
+                <input type="text" id="fundCodeInput" placeholder="基金代码 (如 001773)" pattern="\d*" inputmode="numeric">
             </div>
             <select id="groupSelect" class="group-select"></select>
             <button class="add-btn" id="addFundBtn">➕ 添加</button>
@@ -776,8 +776,7 @@
         <span class="sync-status" id="syncStatus"></span>
     </div>
     <div class="footer-note">
-        ✨ 点击卡片查看曲线 · 所有净值日期已根据UTC偏移量修正<br>
-        📱 适配iOS端交互 · 支持灵动岛/刘海屏
+        ✨ 点击卡片查看曲线 · 15交易日累计涨跌幅实时计算
     </div>
 </div>
 
@@ -804,14 +803,12 @@
 <script>
 (function() {
     // ========== 核心配置 ==========
-    const STORAGE_KEY = 'funds_app_data';
-    // 优化2：新增20日周期
+    const STORAGE_KEY = 'funds_app_data_v2';
     const PERIODS = [3, 5, 7, 10, 15, 20];
-    // 优化4：修正回撤阈值（原逻辑错误，最大回撤为正数，≥8.5%触发风险标记）
-    const RISK_THRESHOLD = 8.5;
+    // 优化1：15日跌幅阈值（跌幅 > 8.5% 触发警告）
+    const DROP_THRESHOLD = -8.5;
     const DAILY_RISK_THRESHOLD = -5.0;
     const MAX_HISTORY_POINTS = 120;
-    // 优化4：15交易日回撤计算周期
     const MAX_DROP_PERIOD = 15;
 
     const R2_CONFIG = {
@@ -838,11 +835,8 @@
     let chartInstance = null;
     let currentModalFund = null;
 
-    // 排序状态
     let sortDirection = 'desc';
     let sortRule = 'daily';
-
-    // UTC偏移量：东八区8小时
     const UTC_OFFSET = 28800000;
 
     // ========== 工具函数 ==========
@@ -876,14 +870,12 @@
         document.head.appendChild(style);
     }
 
-    // 分组内基金重复检查
     function checkFundDuplicate(groupId, fundCode) {
         const group = appData.groups.find(g => g.id === groupId);
         if (!group) return false;
         return group.fundCodes.includes(fundCode);
     }
 
-    // 获取所有基金代码（去重）
     function getAllFundCodes() {
         const allCodes = [];
         appData.groups.forEach(group => {
@@ -894,7 +886,6 @@
         return [...new Set(allCodes)];
     }
 
-    // 日期格式化（UTC转东八区）
     function formatDate(dateInput) {
         if (!dateInput) return '';
         if (typeof dateInput === 'string' && /^\d{4}-\d{2}-\d{2}$/.test(dateInput)) {
@@ -921,7 +912,6 @@
         return String(dateInput);
     }
 
-    // 计算周期涨跌幅
     function computeRate(netWorth, days) {
         if (!netWorth || netWorth.length < days) return null;
         const end = netWorth[netWorth.length - 1].y;
@@ -929,22 +919,18 @@
         return ((end - start) / start * 100).toFixed(2);
     }
 
-    // ========== 优化4：15交易日最大回撤计算（净值数据仅含交易日，slice直接取对应交易日数）==========
-    function computeMaxDrop(netWorth, days) {
+    // ========== 优化1：计算15交易日累计涨跌幅（从第1天到最近一天的涨跌幅）==========
+    function compute15DayChange(netWorth, days) {
         if (!netWorth || netWorth.length < days) return null;
-        // 取最近N个交易日的净值
+        // 取最近N个交易日
         const slice = netWorth.slice(-days);
-        let max = slice[0].y;
-        let maxDrop = 0;
-        for (let i = 1; i < slice.length; i++) {
-            if (slice[i].y > max) max = slice[i].y;
-            const drop = (max - slice[i].y) / max * 100;
-            if (drop > maxDrop) maxDrop = drop;
-        }
-        return maxDrop.toFixed(2);
+        // 计算从第1天到最后一天的累计涨跌幅
+        const start = slice[0].y;
+        const end = slice[slice.length - 1].y;
+        const change = ((end - start) / start * 100).toFixed(2);
+        return change;
     }
 
-    // 获取最新日涨跌幅
     function getLatestInfo(netWorth) {
         if (!netWorth || netWorth.length === 0) return { date: '', value: '', change: null };
         const latest = netWorth[netWorth.length - 1];
@@ -957,7 +943,6 @@
         };
     }
 
-    // 基金排序函数
     function sortFundCodes(fundCodes) {
         const codes = [...fundCodes];
         codes.sort((a, b) => {
@@ -984,7 +969,7 @@
         return codes;
     }
 
-    // ========== 本地存储与数据初始化 ==========
+    // ========== 数据存储 ==========
     function loadAppData() {
         try {
             const raw = localStorage.getItem(STORAGE_KEY);
@@ -1040,7 +1025,7 @@
 
     async function loadFromCloud() {
         if (!s3) throw new Error('S3未初始化');
-        const params = { Bucket: R2_CONFIG.bucketName, Key: 'funds_app_data.json' };
+        const params = { Bucket: R2_CONFIG.bucketName, Key: 'funds_app_data_v2.json' };
         try {
             const data = await s3.getObject(params).promise();
             return JSON.parse(data.Body.toString('utf-8'));
@@ -1054,7 +1039,7 @@
         if (!s3) return;
         await s3.putObject({
             Bucket: R2_CONFIG.bucketName,
-            Key: 'funds_app_data.json',
+            Key: 'funds_app_data_v2.json',
             Body: JSON.stringify(data),
             ContentType: 'application/json'
         }).promise();
@@ -1070,12 +1055,12 @@
         appData.groups.forEach(group => {
             const isDefault = group.id === 'default';
             
-            // 优化4：15交易日回撤风险判断
+            // 优化1：15交易日累计跌幅风险判断
             const has15DRisk = group.fundCodes.some(code => {
                 const cached = appData.fundsCache[code];
                 if (!cached || !cached.netWorth) return false;
-                const maxDrop = computeMaxDrop(cached.netWorth, MAX_DROP_PERIOD);
-                return maxDrop !== null && parseFloat(maxDrop) >= RISK_THRESHOLD;
+                const change15D = compute15DayChange(cached.netWorth, MAX_DROP_PERIOD);
+                return change15D !== null && parseFloat(change15D) <= DROP_THRESHOLD;
             });
             const hasDailyRisk = group.fundCodes.some(code => {
                 const cached = appData.fundsCache[code];
@@ -1098,7 +1083,6 @@
         tabsContainer.innerHTML = tabsHtml;
         if (groupSelect) groupSelect.innerHTML = optionsHtml;
 
-        // 分组切换
         document.querySelectorAll('.group-tab[data-group-id]').forEach(el => {
             el.addEventListener('click', (e) => {
                 if (e.target.classList.contains('delete-group')) return;
@@ -1111,7 +1095,6 @@
             });
         });
 
-        // 删除分组（不迁移基金）
         document.querySelectorAll('.delete-group').forEach(btn => {
             btn.addEventListener('click', (e) => {
                 e.stopPropagation();
@@ -1129,7 +1112,6 @@
             });
         });
 
-        // 新增分组
         document.getElementById('addGroupBtn')?.addEventListener('click', () => {
             const newName = prompt('新分组名称', '新分组');
             if (newName?.trim()) {
@@ -1148,7 +1130,6 @@
             }
         });
 
-        // 排序控件绑定
         document.getElementById('sortDirectionBtn')?.addEventListener('click', function() {
             sortDirection = sortDirection === 'desc' ? 'asc' : 'desc';
             this.textContent = sortDirection === 'desc' ? '降序' : '升序';
@@ -1194,12 +1175,11 @@
             const fund = appData.fundsCache[code];
             if (fund && !fund.error) {
                 const latestInfo = getLatestInfo(fund.netWorth);
-                // 优化4：15交易日最大回撤计算
-                const maxDrop15D = computeMaxDrop(fund.netWorth, MAX_DROP_PERIOD);
-                const isRisk = maxDrop15D !== null && parseFloat(maxDrop15D) >= RISK_THRESHOLD;
+                // 优化1：计算15交易日累计涨跌幅
+                const change15D = compute15DayChange(fund.netWorth, MAX_DROP_PERIOD);
+                const isRisk = change15D !== null && parseFloat(change15D) <= DROP_THRESHOLD;
                 const isDailyRisk = latestInfo.change <= DAILY_RISK_THRESHOLD;
                 
-                // 优化2：渲染20日涨幅
                 let ratesHtml = '';
                 PERIODS.forEach(period => {
                     const rate = computeRate(fund.netWorth, period);
@@ -1213,10 +1193,11 @@
                 });
 
                 const changeClass = latestInfo.change !== null ? (latestInfo.change >= 0 ? 'positive' : 'negative') : '';
-                const riskTag = isRisk ? '<span class="risk-tag">15日高回撤</span>' : '';
+                // 优化1：根据15日跌幅显示不同标签
+                const riskTag = isRisk ? '<span class="risk-tag">15日跌幅大</span>' : '';
                 const dailyRiskTag = isDailyRisk ? '<span class="daily-risk-tag">当日大跌</span>' : '';
-                // 优化4：新增15日最大回撤标签显示
-                const maxDropTag = maxDrop15D ? `<span class="maxdrop-tag">最大回撤 ${maxDrop15D}%</span>` : '';
+                // 优化1：显示15日累计涨跌幅数值
+                const change15DTag = change15D ? `<span class="maxdrop-tag">15日 ${change15D}%</span>` : '';
 
                 cardsHtml += `
                     <div class="card ${isRisk ? 'risk-highlight' : ''}" data-code="${code}">
@@ -1236,7 +1217,7 @@
                         </div>
                         <div class="rates-grid">${ratesHtml}</div>
                         <div class="tag-group">
-                            ${maxDropTag}
+                            ${change15DTag}
                             ${riskTag}
                             ${dailyRiskTag}
                         </div>
@@ -1270,7 +1251,6 @@
 
         container.innerHTML = cardsHtml;
 
-        // 删除基金
         document.querySelectorAll('.delete-btn').forEach(btn => {
             btn.addEventListener('click', async (e) => {
                 e.stopPropagation();
@@ -1290,7 +1270,6 @@
             });
         });
 
-        // 移动基金
         document.querySelectorAll('.move-btn').forEach(btn => {
             btn.addEventListener('click', async (e) => {
                 const code = btn.getAttribute('data-code');
@@ -1321,7 +1300,6 @@
             });
         });
 
-        // 打开卡片模态框
         document.querySelectorAll('.card[data-code]').forEach(card => {
             card.addEventListener('click', async (e) => {
                 if (e.target.classList.contains('delete-btn') || e.target.classList.contains('move-btn')) return;
@@ -1376,9 +1354,8 @@
                         appData.fundsCache[code] = fundInfo;
                         resolve(fundInfo);
                         renderCards();
-                    } else
-					{
-					    reject(new Error('无净值'));
+                    } else {
+                        reject(new Error('无净值'));
                         updateCardError(code);
                     }
                 }, 60);
@@ -1394,7 +1371,6 @@
         });
     }
 
-    // 显示加载中的骨架屏卡片
     function renderLoadingCard(code) {
         const container = document.getElementById('cardContainer');
         if (!container) return;
@@ -1423,7 +1399,6 @@
         }
     }
 
-    // 更新卡片为错误状态
     function updateCardError(code) {
         appData.fundsCache[code] = { code, name: code, error: true };
         renderCards();
@@ -1438,17 +1413,14 @@
         modalTitle.textContent = `${currentModalFund.name} (${currentModalFund.code})`;
         modal.classList.add('active');
         
-        // 默认渲染15日数据
         renderFundChart(15);
         renderNetWorthTable(15);
         
-        // 绑定周期选择事件
         document.querySelectorAll('.period-btn').forEach(btn => {
             btn.addEventListener('click', function() {
                 document.querySelectorAll('.period-btn').forEach(b => b.classList.remove('active'));
                 this.classList.add('active');
                 const days = parseInt(this.getAttribute('data-days'));
-                // 优化3：同时更新图表和表格
                 renderFundChart(days);
                 renderNetWorthTable(days);
             });
@@ -1541,17 +1513,13 @@
         });
     }
 
-    // ========== 优化3：表格渲染函数接受天数参数，动态更新 ==========
     function renderNetWorthTable(days) {
         if (!currentModalFund || !currentModalFund.netWorth) return;
         
         const container = document.getElementById('netWorthTable');
         const titleEl = document.getElementById('tableTitle');
         
-        // 更新标题
         titleEl.textContent = `最近${days}日净值明细`;
-        
-        // 获取对应天数的数据
         const data = currentModalFund.netWorth.slice(-days);
         
         let tableHtml = `
@@ -1567,7 +1535,6 @@
                 <tbody>
         `;
         
-        // 倒序显示（最新的在最上面）
         for (let i = data.length - 1; i >= 0; i--) {
             const item = data[i];
             const prevItem = i > 0 ? data[i - 1] : null;
@@ -1599,7 +1566,6 @@
         renderGroups();
         renderCards();
 
-        // 尝试从云端加载
         if (s3) {
             try {
                 const cloudData = await loadFromCloud();
@@ -1619,7 +1585,6 @@
             }
         }
 
-        // 加载所有基金数据
         const allCodes = getAllFundCodes();
         for (const code of allCodes) {
             try {
@@ -1629,7 +1594,6 @@
             }
         }
 
-        // 绑定添加基金按钮
         document.getElementById('addFundBtn')?.addEventListener('click', async () => {
             const input = document.getElementById('fundCodeInput');
             const groupSelect = document.getElementById('groupSelect');
@@ -1671,20 +1635,17 @@
             }
         });
 
-        // 绑定回车键添加基金
         document.getElementById('fundCodeInput')?.addEventListener('keypress', (e) => {
             if (e.key === 'Enter') {
                 document.getElementById('addFundBtn')?.click();
             }
         });
 
-        // 绑定模态框关闭
         document.getElementById('closeModalBtn')?.addEventListener('click', closeChartModal);
         document.getElementById('chartModal')?.addEventListener('click', (e) => {
             if (e.target.id === 'chartModal') closeChartModal();
         });
 
-        // 绑定手动同步按钮
         document.getElementById('syncToCloudBtn')?.addEventListener('click', async () => {
             if (!s3) {
                 showToast('云端同步未配置');
@@ -1704,7 +1665,6 @@
         });
     }
 
-    // 启动应用
     init();
 })();
 </script>
