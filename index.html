@@ -5,7 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
     <meta name="apple-mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-status-bar-style" content="white">
-    <title>基金看板 · 监控历史涨跌幅</title>
+    <title>基金看板 · 分组默认+简况+板块标签</title>
     <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
     <script src="https://sdk.amazonaws.com/js/aws-sdk-2.1692.0.min.js"></script>
     <style>
@@ -360,7 +360,6 @@
             align-items: center;
             gap: 2px;
         }
-        /* 确保右侧标记与上方标签样式一致 */
         .group-summary-badge .warning-badge {
             background: linear-gradient(135deg, #f97316 0%, #ea580c 100%);
             color: white; 
@@ -471,7 +470,30 @@
         .card-header { display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 12px; gap: 8px; }
         .card-header-left { flex: 1; min-width: 0; overflow: hidden; }
         .fund-title { font-weight: 600; font-size: 1rem; color: #0b1b32; line-height: 1.4; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; word-break: break-word; }
-        .fund-code { font-size: 0.7rem; background: #eef2f9; padding: 3px 8px; border-radius: 40px; color: #4b587c; margin-top: 4px; display: inline-block; }
+        .fund-code-wrapper {
+            display: flex;
+            align-items: center;
+            flex-wrap: wrap;
+            gap: 4px;
+            margin-top: 4px;
+        }
+        .fund-code {
+            font-size: 0.7rem;
+            background: #eef2f9;
+            padding: 3px 8px;
+            border-radius: 40px;
+            color: #4b587c;
+            display: inline-block;
+        }
+        .sector-tag {
+            font-size: 0.65rem;
+            background: #dbeafe;
+            color: #1d4ed8;
+            padding: 3px 8px;
+            border-radius: 30px;
+            display: inline-block;
+            font-weight: 500;
+        }
         .delete-btn { background: white; border: 1px solid #e9ecf5; width: 30px; height: 30px; border-radius: 50%; font-size: 16px; color: #8f9fc0; cursor: pointer; display: flex; align-items: center; justify-content: center; flex-shrink: 0; }
         .delete-btn:hover { background: #fef2f2; border-color: #fecdd3; color: #ef4444; }
         
@@ -574,7 +596,7 @@
         }
         .move-btn:hover { background: linear-gradient(135deg, #dbeafe 0%, #bfdbfe 100%); color: #1d4ed8; }
 
-        /* 模态框美化 */
+        /* 模态框美化 + 简况区域 */
         .modal { 
             display: none; 
             position: fixed; 
@@ -628,6 +650,8 @@
             gap: 8px; 
             margin: 0 0 20px; 
             flex-wrap: wrap;
+            border-bottom: 1px solid #e9ecf5;
+            padding-bottom: 12px;
         }
         .period-btn { 
             background: #f0f2f8; 
@@ -659,6 +683,54 @@
             border-radius: 20px; 
             background: white;
             border: 1px solid #e9ecf5;
+        }
+        .fund-info-panel {
+            background: #fafbff;
+            border-radius: 24px;
+            padding: 20px;
+            margin-top: 16px;
+        }
+        .info-section {
+            margin-bottom: 20px;
+        }
+        .info-section h4 {
+            margin: 0 0 10px 0;
+            color: #0b1b32;
+            font-size: 1rem;
+        }
+        .info-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+            gap: 12px;
+        }
+        .info-item {
+            background: white;
+            border-radius: 16px;
+            padding: 12px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.02);
+        }
+        .info-label {
+            font-size: 0.7rem;
+            color: #5c6b93;
+            margin-bottom: 4px;
+        }
+        .info-value {
+            font-weight: 600;
+            color: #0b1b32;
+        }
+        .stock-table {
+            width: 100%;
+            border-collapse: collapse;
+            font-size: 0.75rem;
+        }
+        .stock-table th {
+            background: #eef2f9;
+            padding: 8px;
+            text-align: left;
+        }
+        .stock-table td {
+            padding: 6px 8px;
+            border-bottom: 1px solid #e9ecf5;
         }
         table { 
             width: 100%; 
@@ -698,8 +770,8 @@
 <body>
 <div class="container">
     <div class="header">
-        <h1>📈 基金分组看板 <span>监控历史涨跌幅</span></h1>
-        <div class="sub">标记15日最大累计跌幅 · 当日最大跌幅</div>
+        <h1>📈 基金分组看板 <span>简况+板块标签</span></h1>
+        <div class="sub">基金名称完整显示 · 15日最大累计跌幅 · 支持名称搜索</div>
         
         <div class="group-tabs-wrapper">
             <div class="group-tabs" id="groupTabs"></div>
@@ -748,7 +820,7 @@
                 </div>
             </h3>
             <div class="group-summary-list" id="groupSummaryList">
-                <!-- 动态渲染分组平均值 + 风险标记（与上方一致） -->
+                <!-- 动态渲染分组平均值 + 风险标记 -->
             </div>
         </div>
     </div>
@@ -758,7 +830,7 @@
         <span class="sync-status" id="syncStatus"></span>
     </div>
     <div class="footer-note">
-        ✨ 点击卡片查看曲线
+        ✨ 点击卡片查看曲线 · 右侧板块同步风险标记
     </div>
 </div>
 
@@ -774,12 +846,22 @@
             <button class="period-btn" data-days="30">30日</button>
             <button class="period-btn" data-days="60">60日</button>
             <button class="period-btn" data-days="90">90日</button>
+            <button class="period-btn" id="fundInfoBtn">📋 简况</button>
         </div>
-        <div class="chart-container">
-            <canvas id="fundChart"></canvas>
+        <!-- 曲线和表格区域 (默认显示) -->
+        <div id="chartTableArea">
+            <div class="chart-container">
+                <canvas id="fundChart"></canvas>
+            </div>
+            <div style="margin-top: 20px; font-weight: 500; color: #2d3a5e;" id="tableTitle">最近15日净值明细</div>
+            <div class="table-container" id="netWorthTable"></div>
         </div>
-        <div style="margin-top: 20px; font-weight: 500; color: #2d3a5e;" id="tableTitle">最近15日净值明细</div>
-        <div class="table-container" id="netWorthTable"></div>
+        <!-- 简况区域 (初始隐藏) -->
+        <div id="fundInfoArea" style="display: none;">
+            <div class="fund-info-panel" id="fundInfoContent">
+                <!-- 动态填充基金经理、持仓等 -->
+            </div>
+        </div>
     </div>
 </div>
 
@@ -966,6 +1048,31 @@
         return codes;
     }
 
+    // 从基金名称中提取板块标签
+    function detectSector(fundName) {
+        const keywords = [
+            '医疗', '医药', '健康', '生物', '中药',
+            '新能源', '光伏', '风电', '锂电', '电池',
+            '环保', '环境',
+            '科技', '信息', '软件', '半导体', '芯片', '电子',
+            '高端制造', '制造',
+            '军工', '航天', '国防',
+            '消费', '食品', '饮料', '白酒',
+            '金融', '银行', '保险', '证券',
+            '地产', '房地产',
+            '农业', '农林牧渔',
+            '有色', '金属', '煤炭', '钢铁', '化工',
+            '文体', '传媒', '游戏',
+            '互联网', '移动互联'
+        ];
+        for (let kw of keywords) {
+            if (fundName.includes(kw)) {
+                return kw;
+            }
+        }
+        return null;
+    }
+
     // ========== 数据存储 ==========
     function loadAppData() {
         try {
@@ -1023,7 +1130,7 @@
     // ========== 分组平均值及风险标记计算 ==========
     function calculateGroupAvgChange(groupId) {
         const group = appData.groups.find(g => g.id === groupId);
-        if (!group || group.id === 'default') return null; // 不计算默认分组
+        if (!group || group.id === 'default') return null;
         const codes = group.fundCodes;
         let sum = 0, count = 0;
         codes.forEach(code => {
@@ -1039,11 +1146,9 @@
         if (count === 0) return null;
         return (sum / count).toFixed(2);
     }
-
-    // 判断分组是否有15日风险
     function has15DayRisk(groupId) {
         const group = appData.groups.find(g => g.id === groupId);
-        if (!group || group.id === 'default') return false; // 全部不显示风险标记
+        if (!group || group.id === 'default') return false;
         return group.fundCodes.some(code => {
             const cached = appData.fundsCache[code];
             if (!cached || !cached.netWorth) return false;
@@ -1062,7 +1167,7 @@
         });
     }
 
-    // ========== 渲染右侧分组板块（带风险标记，与上方完全一致）==========
+    // ========== 渲染右侧分组板块 ==========
     function renderGroupSummaryPanel() {
         const listEl = document.getElementById('groupSummaryList');
         if (!listEl) return;
@@ -1082,7 +1187,6 @@
         items.forEach(item => {
             const activeClass = item.id === currentGroupId ? 'active' : '';
             const valueClass = parseFloat(item.avg) >= 0 ? 'positive' : 'negative';
-            // 构建带样式的标记html，使用与上方一致的class
             let badgeHtml = '';
             if (item.has15) badgeHtml += '<span class="warning-badge">!</span>';
             if (item.hasDaily) badgeHtml += '<span class="green-heart">💚</span>';
@@ -1122,9 +1226,9 @@
         const groupSelect = document.getElementById('groupSelect');
         if (!tabsContainer) return;
         let tabsHtml = '', optionsHtml = '';
+        const nonDefaultGroups = [];
         appData.groups.forEach(group => {
             const isDefault = group.id === 'default';
-            // 计算风险标记（默认分组强制false）
             const has15 = isDefault ? false : has15DayRisk(group.id);
             const hasDaily = isDefault ? false : hasDailyRisk(group.id);
             const fundCount = group.fundCodes.length;
@@ -1134,11 +1238,22 @@
             const countSpan = `<span class="fund-count">${fundCount}</span>`;
             const deleteBtn = isDefault ? '' : `<button class="delete-group" data-group-id="${group.id}">✕</button>`;
             tabsHtml += `<div class="group-tab ${activeClass}" data-group-id="${group.id}">${group.name} ${countSpan} ${warningBadge} ${greenHeart} ${deleteBtn}</div>`;
-            if (!isDefault) optionsHtml += `<option value="${group.id}">${group.name}</option>`;
+            if (!isDefault) {
+                nonDefaultGroups.push(group);
+                optionsHtml += `<option value="${group.id}">${group.name}</option>`;
+            }
         });
         tabsHtml += `<button class="add-group-btn" id="addGroupBtn">+</button>`;
         tabsContainer.innerHTML = tabsHtml;
-        if (groupSelect) groupSelect.innerHTML = optionsHtml;
+        if (groupSelect) {
+            groupSelect.innerHTML = optionsHtml;
+            // 设置默认选中：如果 currentGroupId 不是 default 且存在对应选项，则选中；否则如果存在非默认分组，选中第一个
+            if (currentGroupId !== 'default' && nonDefaultGroups.some(g => g.id === currentGroupId)) {
+                groupSelect.value = currentGroupId;
+            } else if (nonDefaultGroups.length > 0) {
+                groupSelect.value = nonDefaultGroups[0].id;
+            }
+        }
 
         document.querySelectorAll('.group-tab[data-group-id]').forEach(el => {
             el.addEventListener('click', (e) => {
@@ -1184,7 +1299,7 @@
         });
     }
 
-    // ========== 基金卡片/列表渲染（优化数字汉字大小）==========
+    // ========== 基金卡片/列表渲染 ==========
     function renderCards() {
         const container = document.getElementById('cardContainer');
         if (!container) return;
@@ -1219,12 +1334,18 @@
                     const riskTag = isRisk ? '<span class="risk-tag">15日跌幅大</span>' : '';
                     const dailyRiskTag = isDailyRisk ? '<span class="daily-risk-tag">当日大跌</span>' : '';
                     const maxDropTag = maxDropIn15 ? `<span class="maxdrop-tag">15日 ${maxDropIn15}%</span>` : '';
+                    // 板块标签
+                    const sector = detectSector(fund.name || '');
+                    const sectorTag = sector ? `<span class="sector-tag">${sector}</span>` : '';
                     cardsHtml += `
                         <div class="card ${isRisk ? 'risk-highlight' : ''}" data-code="${code}">
                             <div class="card-header">
                                 <div class="card-header-left">
                                     <div class="fund-title">${fund.name || code}</div>
-                                    <div class="fund-code">${code}</div>
+                                    <div class="fund-code-wrapper">
+                                        <span class="fund-code">${code}</span>
+                                        ${sectorTag}
+                                    </div>
                                 </div>
                                 <button class="delete-btn" data-code="${code}">✕</button>
                             </div>
@@ -1250,6 +1371,7 @@
             container.className = 'card-grid';
             container.innerHTML = cardsHtml;
         } else {
+            // 列表视图类似添加板块标签，为了简洁省略，但可保持原有
             let listHtml = '';
             currentFundCodes.forEach(code => {
                 const fund = appData.fundsCache[code];
@@ -1259,11 +1381,14 @@
                     const rate3 = computeRate(fund.netWorth, 3);
                     const rate5 = computeRate(fund.netWorth, 5);
                     const rate15 = computeRate(fund.netWorth, 15);
+                    const sector = detectSector(fund.name || '');
+                    const sectorTag = sector ? `<span class="sector-tag" style="margin-left:4px;">${sector}</span>` : '';
                     listHtml += `
                         <div class="list-row" data-code="${code}">
                             <div class="fund-main">
                                 <span class="fund-title">${fund.name || code}</span>
                                 <span class="fund-code">${code}</span>
+                                ${sectorTag}
                             </div>
                             <div class="latest-info">
                                 <span class="date">${latestInfo.date}</span>
@@ -1337,12 +1462,14 @@
         });
     }
 
-    // ========== 基金数据加载 ==========
+    // ========== 基金数据加载（扩展：获取基金经理和持仓）==========
     async function loadFundData(code, forceRefresh = false) {
-        if (!forceRefresh && appData.fundsCache[code]?.netWorth) return appData.fundsCache[code];
+        if (!forceRefresh && appData.fundsCache[code]?.netWorth) {
+            return appData.fundsCache[code];
+        }
         renderLoadingCard(code);
         return new Promise((resolve, reject) => {
-            const GLOBAL_KEYS = ['Data_netWorthTrend','fund_name','fS_name'];
+            const GLOBAL_KEYS = ['Data_netWorthTrend','fund_name','fS_name','fund_manager','fund_asset','fund_stockportfolio'];
             GLOBAL_KEYS.forEach(k => delete window[k]);
             const script = document.createElement('script');
             script.src = `https://fund.eastmoney.com/pingzhongdata/${code}.js?t=${Date.now()}`;
@@ -1358,10 +1485,14 @@
                         if (netWorth.length > MAX_HISTORY_POINTS) netWorth = netWorth.slice(-MAX_HISTORY_POINTS);
                     }
                     const name = window.fund_name || window.fS_name || code;
+                    // 获取额外信息
+                    const manager = window.fund_manager || null; // 数组
+                    const asset = window.fund_asset || null;     // 资产配置
+                    const stock = window.fund_stockportfolio || null; // 股票持仓
                     GLOBAL_KEYS.forEach(k => delete window[k]);
                     script.remove();
                     if (netWorth && netWorth.length > 0) {
-                        const fundInfo = { code, name, netWorth, error: false };
+                        const fundInfo = { code, name, netWorth, error: false, manager, asset, stock };
                         appData.fundsCache[code] = fundInfo;
                         resolve(fundInfo);
                         renderCards();
@@ -1389,23 +1520,87 @@
         renderGroupSummaryPanel();
     }
 
-    // ========== 模态框 ==========
+    // ========== 模态框（简况） ==========
     function openChartModal() {
         if (!currentModalFund) return;
         const modal = document.getElementById('chartModal');
         document.getElementById('modalFundName').textContent = `${currentModalFund.name} (${currentModalFund.code})`;
         modal.classList.add('active');
+        // 默认显示曲线表格
+        showChartTable();
         renderFundChart(15);
         renderNetWorthTable(15);
-        document.querySelectorAll('.period-btn').forEach(btn => {
+        // 绑定周期按钮
+        document.querySelectorAll('.period-btn:not(#fundInfoBtn)').forEach(btn => {
             btn.addEventListener('click', function() {
                 document.querySelectorAll('.period-btn').forEach(b => b.classList.remove('active'));
                 this.classList.add('active');
-                renderFundChart(parseInt(this.dataset.days));
-                renderNetWorthTable(parseInt(this.dataset.days));
+                showChartTable();
+                const days = parseInt(this.dataset.days);
+                renderFundChart(days);
+                renderNetWorthTable(days);
             });
         });
+        // 简况按钮
+        document.getElementById('fundInfoBtn').addEventListener('click', function() {
+            document.querySelectorAll('.period-btn').forEach(b => b.classList.remove('active'));
+            this.classList.add('active');
+            showFundInfo();
+            renderFundInfo();
+        });
     }
+    function showChartTable() {
+        document.getElementById('chartTableArea').style.display = 'block';
+        document.getElementById('fundInfoArea').style.display = 'none';
+    }
+    function showFundInfo() {
+        document.getElementById('chartTableArea').style.display = 'none';
+        document.getElementById('fundInfoArea').style.display = 'block';
+    }
+    function renderFundInfo() {
+        const fund = currentModalFund;
+        if (!fund) return;
+        const container = document.getElementById('fundInfoContent');
+        let html = '<div class="info-section"><h4>基金经理</h4>';
+        if (fund.manager && fund.manager.length > 0) {
+            html += '<div class="info-grid">';
+            fund.manager.forEach(m => {
+                html += `<div class="info-item"><div class="info-label">经理</div><div class="info-value">${m.name || '--'}</div><div style="font-size:0.7rem;color:#5c6b93;">任职日期: ${m.workDate || '--'}</div></div>`;
+            });
+            html += '</div>';
+        } else {
+            html += '<p style="color:#9aa9c2;">暂无基金经理信息</p>';
+        }
+        html += '</div>';
+
+        html += '<div class="info-section"><h4>资产配置</h4>';
+        if (fund.asset && fund.asset.length > 0) {
+            const lastAsset = fund.asset[fund.asset.length-1]; // 最新一期
+            html += '<div class="info-grid">';
+            html += `<div class="info-item"><div class="info-label">股票</div><div class="info-value">${lastAsset.stock || '--'}%</div></div>`;
+            html += `<div class="info-item"><div class="info-label">债券</div><div class="info-value">${lastAsset.bond || '--'}%</div></div>`;
+            html += `<div class="info-item"><div class="info-label">现金</div><div class="info-value">${lastAsset.cash || '--'}%</div></div>`;
+            html += `<div class="info-item"><div class="info-label">其他</div><div class="info-value">${lastAsset.other || '--'}%</div></div>`;
+            html += '</div>';
+        } else {
+            html += '<p style="color:#9aa9c2;">暂无资产配置信息</p>';
+        }
+        html += '</div>';
+
+        html += '<div class="info-section"><h4>前十大股票持仓</h4>';
+        if (fund.stock && fund.stock.length > 0) {
+            html += '<table class="stock-table"><thead><tr><th>股票名称</th><th>占净值比例(%)</th></tr></thead><tbody>';
+            fund.stock.slice(0, 10).forEach(s => {
+                html += `<tr><td>${s.name || s.code}</td><td>${s.percent || '--'}</td></tr>`;
+            });
+            html += '</tbody></table>';
+        } else {
+            html += '<p style="color:#9aa9c2;">暂无持仓信息</p>';
+        }
+        html += '</div>';
+        container.innerHTML = html;
+    }
+
     function closeChartModal() {
         document.getElementById('chartModal').classList.remove('active');
         if (chartInstance) { chartInstance.destroy(); chartInstance = null; }
@@ -1591,4 +1786,3 @@
 </script>
 </body>
 </html>
-
