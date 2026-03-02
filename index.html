@@ -5,758 +5,139 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
     <meta name="apple-mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-status-bar-style" content="white">
-    <title>基金看板 · 板块优化+简况修复</title>
+    <title>基金看板 · 板块增强+简况完善</title>
     <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
     <script src="https://sdk.amazonaws.com/js/aws-sdk-2.1692.0.min.js"></script>
     <style>
-        * { 
-            box-sizing: border-box; 
-            font-family: -apple-system, BlinkMacSystemFont, "SF Pro Text", "PingFang SC", "Hiragino Sans GB", "Heiti SC", "Microsoft YaHei", "WenQuanYi Micro Hei", sans-serif;
-            -webkit-tap-highlight-color: transparent;
-        }
-        html, body { 
-            background: #f3f5f9; 
-            margin: 0; 
-            padding: 0;
-            min-height: 100vh;
-            -webkit-overflow-scrolling: touch;
-        }
-        body {
-            padding: env(safe-area-inset-top) 16px env(safe-area-inset-bottom) 16px;
-            display: flex; 
-            flex-direction: column; 
-            align-items: center; 
-        }
-        .container { 
-            max-width: 1400px; 
-            width: 100%;
-            margin: 0 auto;
-        }
-        .header { 
-            background: linear-gradient(135deg, #ffffff 0%, #f8faff 100%);
-            border-radius: 28px; 
-            padding: 20px 20px 24px; 
-            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.03); 
-            margin-bottom: 20px;
-            position: relative;
-            overflow: visible !important;
-            z-index: 10;
-        }
-        .header::before {
-            content: "";
-            position: absolute;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 4px;
-            background: linear-gradient(90deg, #3b82f6, #8b5cf6);
-        }
-        h1 { 
-            margin: 0 0 8px; 
-            font-size: 1.6rem; 
-            font-weight: 600; 
-            color: #0b1b32; 
-            display: flex; 
-            gap: 8px; 
-            flex-wrap: wrap; 
-            align-items: center;
-        }
-        h1 span { 
-            background: linear-gradient(135deg, #eef2ff 0%, #dbeafe 100%);
-            color: #1d4ed8; 
-            font-size: 0.8rem; 
-            padding: 4px 12px; 
-            border-radius: 40px; 
-            font-weight: 500;
-        }
-        .sub { 
-            color: #4b587c; 
-            margin-bottom: 16px; 
-            font-size: 0.85rem; 
-            border-left: 3px solid #3b82f6; 
-            padding: 8px 16px; 
-            background: #fafbff; 
-            border-radius: 0 8px 8px 0; 
-            line-height: 1.4;
-        }
-
-        /* 分组+排序容器 */
-        .group-tabs-wrapper {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            flex-wrap: wrap;
-            gap: 12px;
-            margin: 16px 0;
-        }
-        .group-tabs { 
-            display: flex; 
-            flex-wrap: wrap; 
-            gap: 8px; 
-            align-items: center; 
-        }
-        .sort-controls {
-            display: flex;
-            gap: 8px;
-            align-items: center;
-            flex-wrap: wrap;
-        }
-        .sort-direction-btn {
-            background: linear-gradient(135deg, #f0f2f8 0%, #e8ecf4 100%);
-            border-radius: 40px; 
-            padding: 8px 18px; 
-            font-size: 0.85rem; 
-            font-weight: 500; 
-            color: #2d3a5e; 
-            cursor: pointer; 
-            border: 1px solid transparent;
-            transition: all 0.2s ease;
-        }
-        .sort-direction-btn.active {
-            background: linear-gradient(135deg, #0b1b32 0%, #1e3a8a 100%);
-            color: white;
-        }
-        .sort-rule-select {
-            padding: 8px 18px; 
-            border-radius: 40px; 
-            border: 1.5px solid #e1e6f0; 
-            background: white; 
-            font-size: 0.85rem; 
-            min-width: 110px;
-            transition: all 0.2s ease;
-            -webkit-appearance: none;
-            appearance: none;
-            background-image: url("data:image/svg+xml;charset=utf-8,%3Csvg xmlns='http://www.w3.org/2000/svg' width='16' height='16' viewBox='0 0 24 24' fill='none' stroke='%232d3a5e' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M6 9l6 6 6-6'/%3E%3C/svg%3E");
-            background-repeat: no-repeat;
-            background-position: right 12px center;
-            background-size: 16px;
-            padding-right: 36px;
-        }
-        .view-toggle {
-            display: flex;
-            gap: 4px;
-            background: #f0f2f8;
-            border-radius: 40px;
-            padding: 4px;
-        }
-        .view-btn {
-            background: transparent;
-            border: none;
-            padding: 6px 16px;
-            border-radius: 30px;
-            font-size: 0.85rem;
-            font-weight: 500;
-            color: #2d3a5e;
-            cursor: pointer;
-            transition: all 0.2s ease;
-        }
-        .view-btn.active {
-            background: white;
-            color: #0b1b32;
-            box-shadow: 0 2px 6px rgba(0,0,0,0.05);
-        }
-
-        .group-tab { 
-            background: linear-gradient(135deg, #f0f2f8 0%, #e8ecf4 100%);
-            border-radius: 40px; 
-            padding: 8px 18px; 
-            font-size: 0.85rem; 
-            font-weight: 500; 
-            color: #2d3a5e; 
-            cursor: pointer; 
-            display: flex; 
-            align-items: center; 
-            gap: 6px;
-            transition: all 0.2s ease;
-            border: 1px solid transparent;
-        }
-        .group-tab.active { 
-            background: linear-gradient(135deg, #0b1b32 0%, #1e3a8a 100%);
-            color: white; 
-            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
-        }
-        .group-tab .warning-badge { 
-            background: linear-gradient(135deg, #f97316 0%, #ea580c 100%);
-            color: white; 
-            border-radius: 50%; 
-            width: 18px; 
-            height: 18px; 
-            font-size: 12px; 
-            display: inline-flex; 
-            align-items: center; 
-            justify-content: center; 
-            font-weight: 600;
-        }
-        .group-tab .green-heart { 
-            color: #2e7d5e; 
-            font-size: 16px; 
-            line-height: 1; 
-        }
-        .group-tab .fund-count {
-            background: rgba(255,255,255,0.2);
-            border-radius: 30px;
-            padding: 2px 6px;
-            font-size: 0.7rem;
-            margin-left: 4px;
-        }
-        .group-tab .delete-group { 
-            margin-left: 4px; 
-            background: none; 
-            border: none; 
-            color: inherit; 
-            font-size: 16px; 
-            cursor: pointer; 
-            opacity: 0.6;
-            transition: opacity 0.2s;
-        }
-        .add-group-btn { 
-            background: linear-gradient(135deg, #e4e9f5 0%, #d7e0f5 100%);
-            border: none; 
-            border-radius: 50%; 
-            width: 36px; 
-            height: 36px; 
-            font-size: 20px; 
-            cursor: pointer; 
-            color: #2d3a5e;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            transition: all 0.2s ease;
-        }
-        .add-group-btn:hover {
-            transform: rotate(90deg);
-            background: linear-gradient(135deg, #dbeafe 0%, #bfdbfe 100%);
-        }
-
-        /* 搜索添加区域 */
-        .add-area { 
-            display: flex; 
-            gap: 10px; 
-            flex-wrap: wrap; 
-            align-items: flex-start; 
-            margin-top: 8px; 
-            position: relative;
-        }
-        .search-wrapper { 
-            flex: 2 1 220px; 
-            position: relative;
-        }
+        /* 样式与之前版本保持一致，此处省略以减少重复，实际交付时包含完整样式 */
+        * { box-sizing: border-box; font-family: -apple-system, BlinkMacSystemFont, "SF Pro Text", "PingFang SC", "Hiragino Sans GB", "Heiti SC", "Microsoft YaHei", "WenQuanYi Micro Hei", sans-serif; -webkit-tap-highlight-color: transparent; }
+        html, body { background: #f3f5f9; margin: 0; padding: 0; min-height: 100vh; -webkit-overflow-scrolling: touch; }
+        body { padding: env(safe-area-inset-top) 16px env(safe-area-inset-bottom) 16px; display: flex; flex-direction: column; align-items: center; }
+        .container { max-width: 1400px; width: 100%; margin: 0 auto; }
+        .header { background: linear-gradient(135deg, #ffffff 0%, #f8faff 100%); border-radius: 28px; padding: 20px 20px 24px; box-shadow: 0 4px 20px rgba(0, 0, 0, 0.03); margin-bottom: 20px; position: relative; overflow: visible !important; z-index: 10; }
+        .header::before { content: ""; position: absolute; top: 0; left: 0; width: 100%; height: 4px; background: linear-gradient(90deg, #3b82f6, #8b5cf6); }
+        h1 { margin: 0 0 8px; font-size: 1.6rem; font-weight: 600; color: #0b1b32; display: flex; gap: 8px; flex-wrap: wrap; align-items: center; }
+        h1 span { background: linear-gradient(135deg, #eef2ff 0%, #dbeafe 100%); color: #1d4ed8; font-size: 0.8rem; padding: 4px 12px; border-radius: 40px; font-weight: 500; }
+        .sub { color: #4b587c; margin-bottom: 16px; font-size: 0.85rem; border-left: 3px solid #3b82f6; padding: 8px 16px; background: #fafbff; border-radius: 0 8px 8px 0; line-height: 1.4; }
+        .group-tabs-wrapper { display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 12px; margin: 16px 0; }
+        .group-tabs { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; }
+        .sort-controls { display: flex; gap: 8px; align-items: center; flex-wrap: wrap; }
+        .sort-direction-btn { background: linear-gradient(135deg, #f0f2f8 0%, #e8ecf4 100%); border-radius: 40px; padding: 8px 18px; font-size: 0.85rem; font-weight: 500; color: #2d3a5e; cursor: pointer; border: 1px solid transparent; transition: all 0.2s ease; }
+        .sort-direction-btn.active { background: linear-gradient(135deg, #0b1b32 0%, #1e3a8a 100%); color: white; }
+        .sort-rule-select { padding: 8px 18px; border-radius: 40px; border: 1.5px solid #e1e6f0; background: white; font-size: 0.85rem; min-width: 110px; transition: all 0.2s ease; -webkit-appearance: none; appearance: none; background-image: url("data:image/svg+xml;charset=utf-8,%3Csvg xmlns='http://www.w3.org/2000/svg' width='16' height='16' viewBox='0 0 24 24' fill='none' stroke='%232d3a5e' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M6 9l6 6 6-6'/%3E%3C/svg%3E"); background-repeat: no-repeat; background-position: right 12px center; background-size: 16px; padding-right: 36px; }
+        .view-toggle { display: flex; gap: 4px; background: #f0f2f8; border-radius: 40px; padding: 4px; }
+        .view-btn { background: transparent; border: none; padding: 6px 16px; border-radius: 30px; font-size: 0.85rem; font-weight: 500; color: #2d3a5e; cursor: pointer; transition: all 0.2s ease; }
+        .view-btn.active { background: white; color: #0b1b32; box-shadow: 0 2px 6px rgba(0,0,0,0.05); }
+        .group-tab { background: linear-gradient(135deg, #f0f2f8 0%, #e8ecf4 100%); border-radius: 40px; padding: 8px 18px; font-size: 0.85rem; font-weight: 500; color: #2d3a5e; cursor: pointer; display: flex; align-items: center; gap: 6px; transition: all 0.2s ease; border: 1px solid transparent; }
+        .group-tab.active { background: linear-gradient(135deg, #0b1b32 0%, #1e3a8a 100%); color: white; box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1); }
+        .group-tab .warning-badge { background: linear-gradient(135deg, #f97316 0%, #ea580c 100%); color: white; border-radius: 50%; width: 18px; height: 18px; font-size: 12px; display: inline-flex; align-items: center; justify-content: center; font-weight: 600; }
+        .group-tab .green-heart { color: #2e7d5e; font-size: 16px; line-height: 1; }
+        .group-tab .fund-count { background: rgba(255,255,255,0.2); border-radius: 30px; padding: 2px 6px; font-size: 0.7rem; margin-left: 4px; }
+        .group-tab .delete-group { margin-left: 4px; background: none; border: none; color: inherit; font-size: 16px; cursor: pointer; opacity: 0.6; transition: opacity 0.2s; }
+        .add-group-btn { background: linear-gradient(135deg, #e4e9f5 0%, #d7e0f5 100%); border: none; border-radius: 50%; width: 36px; height: 36px; font-size: 20px; cursor: pointer; color: #2d3a5e; display: flex; align-items: center; justify-content: center; transition: all 0.2s ease; }
+        .add-group-btn:hover { transform: rotate(90deg); background: linear-gradient(135deg, #dbeafe 0%, #bfdbfe 100%); }
+        .add-area { display: flex; gap: 10px; flex-wrap: wrap; align-items: flex-start; margin-top: 8px; position: relative; }
+        .search-wrapper { flex: 2 1 220px; position: relative; }
         .input-wrapper { width: 100%; position: relative; }
-        .input-wrapper input { 
-            width: 100%; padding: 14px 18px; border: 1.5px solid #e1e6f0; border-radius: 44px; 
-            font-size: 0.9rem; background: white; transition: all 0.2s ease; 
-        }
-        .input-wrapper input:focus {
-            outline: none; border-color: #3b82f6; box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
-        }
-        .suggestion-dropdown {
-            position: absolute; top: calc(100% + 4px); left: 0; right: 0; background: white;
-            border-radius: 18px; box-shadow: 0 6px 20px rgba(0,20,50,0.15); max-height: 280px;
-            overflow-y: auto; z-index: 1000; border: 1px solid #e9ecf5; display: none;
-        }
+        .input-wrapper input { width: 100%; padding: 14px 18px; border: 1.5px solid #e1e6f0; border-radius: 44px; font-size: 0.9rem; background: white; transition: all 0.2s ease; }
+        .input-wrapper input:focus { outline: none; border-color: #3b82f6; box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1); }
+        .suggestion-dropdown { position: absolute; top: calc(100% + 4px); left: 0; right: 0; background: white; border-radius: 18px; box-shadow: 0 6px 20px rgba(0,20,50,0.15); max-height: 280px; overflow-y: auto; z-index: 1000; border: 1px solid #e9ecf5; display: none; }
         .suggestion-dropdown.active { display: block; }
-        .suggestion-item {
-            padding: 12px 16px; border-bottom: 1px solid #f0f2f8; cursor: pointer;
-            display: flex; justify-content: space-between; align-items: center;
-        }
+        .suggestion-item { padding: 12px 16px; border-bottom: 1px solid #f0f2f8; cursor: pointer; display: flex; justify-content: space-between; align-items: center; }
         .suggestion-item:hover { background: #f0f4ff; }
         .suggestion-name { font-weight: 500; color: #0b1b32; font-size: 0.9rem; max-width: 200px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
         .suggestion-code { font-size: 0.75rem; background: #eef2f9; padding: 3px 8px; border-radius: 30px; color: #4b587c; margin-left: 10px; }
         .suggestion-type { font-size: 0.65rem; color: #8f9fc0; margin-left: 6px; }
-
-        .group-select { 
-            padding: 14px 18px; border-radius: 44px; border: 1.5px solid #e1e6f0; background: white;
-            font-size: 0.9rem; min-width: 110px; transition: all 0.2s ease;
-            -webkit-appearance: none; appearance: none;
-            background-image: url("data:image/svg+xml;charset=utf-8,%3Csvg xmlns='http://www.w3.org/2000/svg' width='16' height='16' viewBox='0 0 24 24' fill='none' stroke='%232d3a5e' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M6 9l6 6 6-6'/%3E%3C/svg%3E");
-            background-repeat: no-repeat; background-position: right 12px center; background-size: 16px; padding-right: 36px;
-        }
-        .add-btn { 
-            background: linear-gradient(135deg, #0b1b32 0%, #1e3a8a 100%); color: white; border: none;
-            padding: 14px 24px; border-radius: 60px; font-size: 0.9rem; font-weight: 500; cursor: pointer;
-            transition: all 0.2s ease; flex: 0 0 auto;
-        }
-
-        /* 主内容区：左侧卡片/列表 + 右侧板块 */
-        .main-dashboard {
-            display: flex;
-            gap: 20px;
-            flex-wrap: wrap;
-        }
-        .left-panel {
-            flex: 3;
-            min-width: 300px;
-        }
-        .right-panel {
-            flex: 1;
-            min-width: 240px;
-            background: linear-gradient(135deg, #ffffff 0%, #f8faff 100%);
-            border-radius: 28px;
-            padding: 20px 16px;
-            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.03);
-            align-self: start;
-        }
-        .right-panel h3 {
-            margin: 0 0 16px 0;
-            font-size: 1rem;
-            color: #0b1b32;
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-        }
-        .group-summary-sort {
-            background: linear-gradient(135deg, #f0f2f8 0%, #e8ecf4 100%);
-            border-radius: 40px;
-            padding: 4px 8px;
-            font-size: 0.7rem;
-            display: flex;
-            gap: 4px;
-        }
-        .group-summary-sort span {
-            cursor: pointer;
-            padding: 2px 8px;
-            border-radius: 20px;
-            transition: background 0.2s;
-        }
-        .group-summary-sort span.active {
-            background: white;
-            color: #0b1b32;
-            box-shadow: 0 2px 4px rgba(0,0,0,0.05);
-        }
-        .group-summary-list {
-            display: flex;
-            flex-direction: column;
-            gap: 8px;
-        }
-        .group-summary-item {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            padding: 12px 16px;
-            background: linear-gradient(135deg, #f8faff 0%, #eff6ff 100%);
-            border-radius: 20px;
-            cursor: pointer;
-            transition: all 0.2s ease;
-            border: 1px solid transparent;
-        }
-        .group-summary-item:hover {
-            transform: translateY(-2px);
-            box-shadow: 0 4px 8px rgba(0,0,0,0.05);
-        }
-        .group-summary-item.active {
-            border-color: #3b82f6;
-            background: linear-gradient(135deg, #eef2ff 0%, #dbeafe 100%);
-        }
-        .group-summary-name {
-            font-weight: 500;
-            color: #0b1b32;
-            display: flex;
-            align-items: center;
-            gap: 4px;
-            flex-wrap: wrap;
-        }
-        .group-summary-badge {
-            display: inline-flex;
-            align-items: center;
-            gap: 2px;
-        }
-        .group-summary-badge .warning-badge {
-            background: linear-gradient(135deg, #f97316 0%, #ea580c 100%);
-            color: white; 
-            border-radius: 50%; 
-            width: 18px; 
-            height: 18px; 
-            font-size: 12px; 
-            display: inline-flex; 
-            align-items: center; 
-            justify-content: center; 
-            font-weight: 600;
-        }
-        .group-summary-badge .green-heart {
-            color: #2e7d5e; 
-            font-size: 16px; 
-            line-height: 1;
-        }
-        .group-summary-value {
-            font-weight: 600;
-            padding: 4px 12px;
-            border-radius: 30px;
-            background: white;
-        }
+        .group-select { padding: 14px 18px; border-radius: 44px; border: 1.5px solid #e1e6f0; background: white; font-size: 0.9rem; min-width: 110px; transition: all 0.2s ease; -webkit-appearance: none; appearance: none; background-image: url("data:image/svg+xml;charset=utf-8,%3Csvg xmlns='http://www.w3.org/2000/svg' width='16' height='16' viewBox='0 0 24 24' fill='none' stroke='%232d3a5e' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M6 9l6 6 6-6'/%3E%3C/svg%3E"); background-repeat: no-repeat; background-position: right 12px center; background-size: 16px; padding-right: 36px; }
+        .add-btn { background: linear-gradient(135deg, #0b1b32 0%, #1e3a8a 100%); color: white; border: none; padding: 14px 24px; border-radius: 60px; font-size: 0.9rem; font-weight: 500; cursor: pointer; transition: all 0.2s ease; flex: 0 0 auto; }
+        .main-dashboard { display: flex; gap: 20px; flex-wrap: wrap; }
+        .left-panel { flex: 3; min-width: 300px; }
+        .right-panel { flex: 1; min-width: 240px; background: linear-gradient(135deg, #ffffff 0%, #f8faff 100%); border-radius: 28px; padding: 20px 16px; box-shadow: 0 4px 20px rgba(0, 0, 0, 0.03); align-self: start; }
+        .right-panel h3 { margin: 0 0 16px 0; font-size: 1rem; color: #0b1b32; display: flex; justify-content: space-between; align-items: center; }
+        .group-summary-sort { background: linear-gradient(135deg, #f0f2f8 0%, #e8ecf4 100%); border-radius: 40px; padding: 4px 8px; font-size: 0.7rem; display: flex; gap: 4px; }
+        .group-summary-sort span { cursor: pointer; padding: 2px 8px; border-radius: 20px; transition: background 0.2s; }
+        .group-summary-sort span.active { background: white; color: #0b1b32; box-shadow: 0 2px 4px rgba(0,0,0,0.05); }
+        .group-summary-list { display: flex; flex-direction: column; gap: 8px; }
+        .group-summary-item { display: flex; justify-content: space-between; align-items: center; padding: 12px 16px; background: linear-gradient(135deg, #f8faff 0%, #eff6ff 100%); border-radius: 20px; cursor: pointer; transition: all 0.2s ease; border: 1px solid transparent; }
+        .group-summary-item:hover { transform: translateY(-2px); box-shadow: 0 4px 8px rgba(0,0,0,0.05); }
+        .group-summary-item.active { border-color: #3b82f6; background: linear-gradient(135deg, #eef2ff 0%, #dbeafe 100%); }
+        .group-summary-name { font-weight: 500; color: #0b1b32; display: flex; align-items: center; gap: 4px; flex-wrap: wrap; }
+        .group-summary-badge { display: inline-flex; align-items: center; gap: 2px; }
+        .group-summary-badge .warning-badge { background: linear-gradient(135deg, #f97316 0%, #ea580c 100%); color: white; border-radius: 50%; width: 18px; height: 18px; font-size: 12px; display: inline-flex; align-items: center; justify-content: center; font-weight: 600; }
+        .group-summary-badge .green-heart { color: #2e7d5e; font-size: 16px; line-height: 1; }
+        .group-summary-value { font-weight: 600; padding: 4px 12px; border-radius: 30px; background: white; }
         .group-summary-value.positive { color: #ef4444; }
         .group-summary-value.negative { color: #16a34a; }
-
-        /* 卡片网格 (卡片视图) */
-        .card-grid { 
-            display: grid; 
-            grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); 
-            gap: 16px; 
-        }
-        /* 列表视图 */
-        .list-view {
-            display: flex;
-            flex-direction: column;
-            gap: 8px;
-        }
-        .list-row {
-            background: linear-gradient(135deg, #ffffff 0%, #fafbff 100%);
-            border-radius: 20px;
-            padding: 12px 16px;
-            box-shadow: 0 2px 8px rgba(0, 20, 50, 0.04);
-            cursor: pointer;
-            display: flex;
-            flex-wrap: wrap;
-            align-items: center;
-            gap: 12px;
-            border: 1px solid #f0f4ff;
-            transition: all 0.2s;
-        }
-        .list-row:hover {
-            transform: translateY(-1px);
-            box-shadow: 0 4px 12px rgba(0, 20, 50, 0.06);
-        }
-        .list-row .fund-main {
-            flex: 2;
-            min-width: 180px;
-        }
-        .list-row .fund-title {
-            font-weight: 600;
-            font-size: 0.95rem;
-            color: #0b1b32;
-        }
-        .list-row .fund-code {
-            font-size: 0.7rem;
-            color: #4b587c;
-            margin-left: 6px;
-        }
-        .list-row .latest-info {
-            flex: 1;
-            min-width: 140px;
-            background: transparent;
-            padding: 0;
-            margin: 0;
-            display: flex;
-            gap: 8px;
-            align-items: center;
-        }
-        .list-row .rates-summary {
-            flex: 2;
-            display: flex;
-            gap: 12px;
-            flex-wrap: wrap;
-        }
-        .list-row .rate-item {
-            background: #eef2f9;
-            border-radius: 30px;
-            padding: 4px 10px;
-            font-size: 0.75rem;
-        }
-        .list-row .delete-btn {
-            margin-left: auto;
-        }
-
-        /* 卡片样式优化 */
-        .card { 
-            background: linear-gradient(135deg, #ffffff 0%, #fafbff 100%);
-            border-radius: 24px; 
-            padding: 20px 16px; 
-            box-shadow: 0 6px 20px rgba(0, 20, 50, 0.06); 
-            cursor: pointer; 
-            position: relative;
-            transition: all 0.3s ease;
-            border: 1px solid #f0f4ff;
-        }
+        .card-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); gap: 16px; }
+        .list-view { display: flex; flex-direction: column; gap: 8px; }
+        .list-row { background: linear-gradient(135deg, #ffffff 0%, #fafbff 100%); border-radius: 20px; padding: 12px 16px; box-shadow: 0 2px 8px rgba(0, 20, 50, 0.04); cursor: pointer; display: flex; flex-wrap: wrap; align-items: center; gap: 12px; border: 1px solid #f0f4ff; transition: all 0.2s; }
+        .list-row:hover { transform: translateY(-1px); box-shadow: 0 4px 12px rgba(0, 20, 50, 0.06); }
+        .list-row .fund-main { flex: 2; min-width: 180px; }
+        .list-row .fund-title { font-weight: 600; font-size: 0.95rem; color: #0b1b32; }
+        .list-row .fund-code { font-size: 0.7rem; color: #4b587c; margin-left: 6px; }
+        .list-row .latest-info { flex: 1; min-width: 140px; background: transparent; padding: 0; margin: 0; display: flex; gap: 8px; align-items: center; }
+        .list-row .rates-summary { flex: 2; display: flex; gap: 12px; flex-wrap: wrap; }
+        .list-row .rate-item { background: #eef2f9; border-radius: 30px; padding: 4px 10px; font-size: 0.75rem; }
+        .list-row .delete-btn { margin-left: auto; }
+        .card { background: linear-gradient(135deg, #ffffff 0%, #fafbff 100%); border-radius: 24px; padding: 20px 16px; box-shadow: 0 6px 20px rgba(0, 20, 50, 0.06); cursor: pointer; position: relative; transition: all 0.3s ease; border: 1px solid #f0f4ff; }
         .card.risk-highlight { border: 2px solid #f97316; }
         .card-header { display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 12px; gap: 8px; }
         .card-header-left { flex: 1; min-width: 0; overflow: hidden; }
         .fund-title { font-weight: 600; font-size: 1rem; color: #0b1b32; line-height: 1.4; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; word-break: break-word; }
-        .fund-code-wrapper {
-            display: flex;
-            align-items: center;
-            flex-wrap: wrap;
-            gap: 4px;
-            margin-top: 4px;
-        }
-        .fund-code {
-            font-size: 0.7rem;
-            background: #eef2f9;
-            padding: 3px 8px;
-            border-radius: 40px;
-            color: #4b587c;
-            display: inline-block;
-        }
-        .sector-tag {
-            font-size: 0.65rem;
-            background: #dbeafe;
-            color: #1d4ed8;
-            padding: 3px 8px;
-            border-radius: 30px;
-            display: inline-block;
-            font-weight: 500;
-        }
+        .fund-code-wrapper { display: flex; align-items: center; flex-wrap: wrap; gap: 4px; margin-top: 4px; }
+        .fund-code { font-size: 0.7rem; background: #eef2f9; padding: 3px 8px; border-radius: 40px; color: #4b587c; display: inline-block; }
+        .sector-tag { font-size: 0.65rem; background: #dbeafe; color: #1d4ed8; padding: 3px 8px; border-radius: 30px; display: inline-block; font-weight: 500; }
         .delete-btn { background: white; border: 1px solid #e9ecf5; width: 30px; height: 30px; border-radius: 50%; font-size: 16px; color: #8f9fc0; cursor: pointer; display: flex; align-items: center; justify-content: center; flex-shrink: 0; }
         .delete-btn:hover { background: #fef2f2; border-color: #fecdd3; color: #ef4444; }
-        
-        /* 最新信息区域 - 增加净值与涨跌幅间距 */
-        .latest-info { 
-            display: flex; 
-            justify-content: space-between; 
-            align-items: center; 
-            font-size: 0.8rem; 
-            background: linear-gradient(135deg, #f8faff 0%, #eff6ff 100%);
-            padding: 10px 14px; 
-            border-radius: 18px; 
-            margin-bottom: 12px; 
-            gap: 8px;
-        }
-        .latest-info .date {
-            color: #4b587c;
-            font-weight: 500;
-            white-space: nowrap;
-        }
-        .latest-info .value {
-            font-weight: 600;
-            color: #0b1b32;
-        }
-        .latest-info .change {
-            font-weight: 600;
-            margin-left: 8px;
-        }
+        .latest-info { display: flex; justify-content: space-between; align-items: center; font-size: 0.8rem; background: linear-gradient(135deg, #f8faff 0%, #eff6ff 100%); padding: 10px 14px; border-radius: 18px; margin-bottom: 12px; gap: 8px; }
+        .latest-info .date { color: #4b587c; font-weight: 500; white-space: nowrap; }
+        .latest-info .value { font-weight: 600; color: #0b1b32; }
+        .latest-info .change { font-weight: 600; margin-left: 8px; }
         .latest-info .change.positive { color: #ef4444; }
         .latest-info .change.negative { color: #16a34a; }
-
-        /* 多周期涨跌网格 */
-        .rates-grid { 
-            display: flex; 
-            flex-wrap: wrap; 
-            gap: 8px 4px; 
-            background: linear-gradient(135deg, #f8faff 0%, #eff6ff 100%);
-            padding: 12px 10px; 
-            border-radius: 20px; 
-            margin-bottom: 10px;
-        }
-        .rate-item { 
-            flex: 1 0 auto; 
-            min-width: 48px;
-            text-align: center; 
-        }
-        .rate-label { 
-            font-size: 0.6rem; 
-            color: #5c6b93; 
-            margin-bottom: 2px; 
-            display: block;
-        }
-        .rate-value { 
-            font-size: 0.85rem; 
-            font-weight: 600; 
-            line-height: 1.3;
-        }
+        .rates-grid { display: flex; flex-wrap: wrap; gap: 8px 4px; background: linear-gradient(135deg, #f8faff 0%, #eff6ff 100%); padding: 12px 10px; border-radius: 20px; margin-bottom: 10px; }
+        .rate-item { flex: 1 0 auto; min-width: 48px; text-align: center; }
+        .rate-label { font-size: 0.6rem; color: #5c6b93; margin-bottom: 2px; display: block; }
+        .rate-value { font-size: 0.85rem; font-weight: 600; line-height: 1.3; }
         .positive { color: #ef4444; }
         .negative { color: #16a34a; }
-
-        .tag-group {
-            display: flex;
-            flex-wrap: wrap;
-            gap: 4px;
-            margin-top: 6px;
-        }
+        .tag-group { display: flex; flex-wrap: wrap; gap: 4px; margin-top: 6px; }
         .risk-tag { font-size: 0.7rem; background: linear-gradient(135deg, #f97316 0%, #ea580c 100%); color: white; padding: 3px 10px; border-radius: 20px; }
         .daily-risk-tag { background: linear-gradient(135deg, #2e7d5e 0%, #16a34a 100%); color: white; padding: 3px 10px; border-radius: 20px; }
         .maxdrop-tag { background: linear-gradient(135deg, #6366f1 0%, #4f46e5 100%); color: white; padding: 3px 10px; border-radius: 20px; }
-
-        .move-controls { 
-            display: flex; 
-            align-items: center; 
-            gap: 6px; 
-            margin-top: 12px; 
-            padding-top: 10px; 
-            border-top: 1px dashed #dbe1ef; 
-            font-size: 0.7rem;
-        }
-        .move-select { 
-            flex: 1; 
-            padding: 6px 8px; 
-            border-radius: 20px; 
-            border: 1px solid #dbe1ef; 
-            background: white;
-            font-size: 0.7rem;
-            -webkit-appearance: none; appearance: none;
-            background-image: url("data:image/svg+xml;charset=utf-8,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 24 24' fill='none' stroke='%232d3a5e' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M6 9l6 6 6-6'/%3E%3C/svg%3E");
-            background-repeat: no-repeat; background-position: right 8px center; background-size: 12px; padding-right: 24px;
-        }
-        .move-btn { 
-            background: linear-gradient(135deg, #eef2f6 0%, #dbeafe 100%); 
-            border: none; 
-            border-radius: 20px; 
-            padding: 6px 12px; 
-            font-size: 0.7rem; 
-            cursor: pointer; 
-            color: #2d3a5e; 
-            font-weight: 500; 
-        }
+        .move-controls { display: flex; align-items: center; gap: 6px; margin-top: 12px; padding-top: 10px; border-top: 1px dashed #dbe1ef; font-size: 0.7rem; }
+        .move-select { flex: 1; padding: 6px 8px; border-radius: 20px; border: 1px solid #dbe1ef; background: white; font-size: 0.7rem; -webkit-appearance: none; appearance: none; background-image: url("data:image/svg+xml;charset=utf-8,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 24 24' fill='none' stroke='%232d3a5e' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M6 9l6 6 6-6'/%3E%3C/svg%3E"); background-repeat: no-repeat; background-position: right 8px center; background-size: 12px; padding-right: 24px; }
+        .move-btn { background: linear-gradient(135deg, #eef2f6 0%, #dbeafe 100%); border: none; border-radius: 20px; padding: 6px 12px; font-size: 0.7rem; cursor: pointer; color: #2d3a5e; font-weight: 500; }
         .move-btn:hover { background: linear-gradient(135deg, #dbeafe 0%, #bfdbfe 100%); color: #1d4ed8; }
-
-        /* 模态框美化 + 简况区域 */
-        .modal { 
-            display: none; 
-            position: fixed; 
-            top:0; left:0; width:100%; height:100%; 
-            background:rgba(0,0,0,0.5); 
-            align-items:center; justify-content:center; 
-            z-index:1000; 
-            backdrop-filter: blur(8px);
-        }
+        .modal { display: none; position: fixed; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.5); align-items:center; justify-content:center; z-index:1000; backdrop-filter: blur(8px); }
         .modal.active { display: flex; }
-        .modal-content { 
-            background: white; 
-            border-radius: 36px; 
-            padding: 28px 24px; 
-            max-width:900px; 
-            width:95%; 
-            max-height:85vh; 
-            overflow-y:auto; 
-            box-shadow: 0 25px 50px rgba(0,0,0,0.15);
-            border: 1px solid rgba(255,255,255,0.2);
-        }
-        .modal-header { 
-            display: flex; 
-            justify-content: space-between; 
-            align-items: center; 
-            margin-bottom: 24px; 
-        }
-        .modal-header h3 { 
-            margin:0; 
-            font-size:1.2rem; 
-            color:#0b1b32; 
-            font-weight:600; 
-        }
-        .close-modal { 
-            background: #f0f2f8; 
-            border: none; 
-            width: 36px; 
-            height: 36px; 
-            border-radius: 50%; 
-            font-size: 20px; 
-            cursor: pointer; 
-            color: #4b587c;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            transition: all 0.2s;
-        }
+        .modal-content { background: white; border-radius: 36px; padding: 28px 24px; max-width:900px; width:95%; max-height:85vh; overflow-y:auto; box-shadow: 0 25px 50px rgba(0,0,0,0.15); border: 1px solid rgba(255,255,255,0.2); }
+        .modal-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 24px; }
+        .modal-header h3 { margin:0; font-size:1.2rem; color:#0b1b32; font-weight:600; }
+        .close-modal { background: #f0f2f8; border: none; width: 36px; height: 36px; border-radius: 50%; font-size: 20px; cursor: pointer; color: #4b587c; display: flex; align-items: center; justify-content: center; transition: all 0.2s; }
         .close-modal:hover { background: #fee2e2; color: #ef4444; }
-        .period-selector { 
-            display: flex; 
-            gap: 8px; 
-            margin: 0 0 20px; 
-            flex-wrap: wrap;
-            border-bottom: 1px solid #e9ecf5;
-            padding-bottom: 12px;
-        }
-        .period-btn { 
-            background: #f0f2f8; 
-            border: none; 
-            padding: 8px 20px; 
-            border-radius: 40px; 
-            cursor: pointer;
-            font-size: 0.85rem;
-            font-weight: 500;
-            color: #2d3a5e;
-            transition: all 0.2s;
-        }
-        .period-btn.active { 
-            background: #0b1b32; 
-            color: white; 
-            box-shadow: 0 4px 8px rgba(0,0,0,0.1);
-        }
-        .chart-container { 
-            width: 100%; 
-            height: 280px; 
-            margin-bottom: 24px; 
-            background: #fafbff;
-            border-radius: 24px;
-            padding: 16px;
-        }
-        .table-container { 
-            max-height: 300px; 
-            overflow-y: auto; 
-            border-radius: 20px; 
-            background: white;
-            border: 1px solid #e9ecf5;
-        }
-        .fund-info-panel {
-            background: #fafbff;
-            border-radius: 24px;
-            padding: 20px;
-            margin-top: 16px;
-        }
-        .info-section {
-            margin-bottom: 20px;
-        }
-        .info-section h4 {
-            margin: 0 0 10px 0;
-            color: #0b1b32;
-            font-size: 1rem;
-        }
-        .info-grid {
-            display: grid;
-            grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
-            gap: 12px;
-        }
-        .info-item {
-            background: white;
-            border-radius: 16px;
-            padding: 12px;
-            box-shadow: 0 2px 8px rgba(0,0,0,0.02);
-        }
-        .info-label {
-            font-size: 0.7rem;
-            color: #5c6b93;
-            margin-bottom: 4px;
-        }
-        .info-value {
-            font-weight: 600;
-            color: #0b1b32;
-        }
-        .stock-table {
-            width: 100%;
-            border-collapse: collapse;
-            font-size: 0.75rem;
-        }
-        .stock-table th {
-            background: #eef2f9;
-            padding: 8px;
-            text-align: left;
-        }
-        .stock-table td {
-            padding: 6px 8px;
-            border-bottom: 1px solid #e9ecf5;
-        }
-        table { 
-            width: 100%; 
-            border-collapse: collapse; 
-            font-size: 0.8rem; 
-        }
-        th { 
-            background: #f0f2f8;
-            position: sticky; 
-            top: 0; 
-            padding: 12px 8px; 
-            text-align: center; 
-            color: #2d3a5e;
-            font-weight: 600;
-        }
-        td { 
-            padding: 10px 6px; 
-            border-bottom: 1px solid #e9ecf5; 
-            text-align: center; 
-            color: #0b1b32;
-        }
+        .period-selector { display: flex; gap: 8px; margin: 0 0 20px; flex-wrap: wrap; border-bottom: 1px solid #e9ecf5; padding-bottom: 12px; }
+        .period-btn { background: #f0f2f8; border: none; padding: 8px 20px; border-radius: 40px; cursor: pointer; font-size: 0.85rem; font-weight: 500; color: #2d3a5e; transition: all 0.2s; }
+        .period-btn.active { background: #0b1b32; color: white; box-shadow: 0 4px 8px rgba(0,0,0,0.1); }
+        .chart-container { width: 100%; height: 280px; margin-bottom: 24px; background: #fafbff; border-radius: 24px; padding: 16px; }
+        .table-container { max-height: 300px; overflow-y: auto; border-radius: 20px; background: white; border: 1px solid #e9ecf5; }
+        .fund-info-panel { background: #fafbff; border-radius: 24px; padding: 20px; margin-top: 16px; }
+        .info-section { margin-bottom: 20px; }
+        .info-section h4 { margin: 0 0 10px 0; color: #0b1b32; font-size: 1rem; }
+        .info-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(200px, 1fr)); gap: 12px; }
+        .info-item { background: white; border-radius: 16px; padding: 12px; box-shadow: 0 2px 8px rgba(0,0,0,0.02); }
+        .info-label { font-size: 0.7rem; color: #5c6b93; margin-bottom: 4px; }
+        .info-value { font-weight: 600; color: #0b1b32; }
+        .stock-table { width: 100%; border-collapse: collapse; font-size: 0.75rem; }
+        .stock-table th { background: #eef2f9; padding: 8px; text-align: left; }
+        .stock-table td { padding: 6px 8px; border-bottom: 1px solid #e9ecf5; }
+        table { width: 100%; border-collapse: collapse; font-size: 0.8rem; }
+        th { background: #f0f2f8; position: sticky; top: 0; padding: 12px 8px; text-align: center; color: #2d3a5e; font-weight: 600; }
+        td { padding: 10px 6px; border-bottom: 1px solid #e9ecf5; text-align: center; color: #0b1b32; }
         tr:last-child td { border-bottom: none; }
         tr:hover td { background: #f8faff; }
         td.positive { color: #ef4444; font-weight: 500; }
         td.negative { color: #16a34a; font-weight: 500; }
-
         .sync-area { display: flex; gap:12px; justify-content:center; margin:24px 0; flex-wrap:wrap; }
         .sync-btn { background: #eef2f6; border: none; padding:12px 24px; border-radius:40px; cursor:pointer; font-size:0.9rem; font-weight:500; color:#2d3a5e; display: flex; align-items:center; gap:8px; transition:all 0.2s; }
         .sync-btn:hover { background: #dbeafe; transform: translateY(-1px); box-shadow:0 4px 12px rgba(59,130,246,0.1); }
@@ -770,7 +151,7 @@
 <body>
 <div class="container">
     <div class="header">
-        <h1>📈 基金分组看板 <span>板块优化+简况修复</span></h1>
+        <h1>📈 基金分组看板 <span>板块增强+简况完善</span></h1>
         <div class="sub">基金名称完整显示 · 15日最大累计跌幅 · 支持名称搜索</div>
         
         <div class="group-tabs-wrapper">
@@ -940,7 +321,7 @@
                             code: item[0],
                             short: item[1],
                             name: item[2],
-                            type: item[3]
+                            type: item[3]  // 如 "股票型", "混合型", 可能包含行业信息
                         }));
                         localStorage.setItem('fund_master_list', JSON.stringify(masterFundList));
                         localStorage.setItem('fund_master_list_time', Date.now().toString());
@@ -1048,29 +429,40 @@
         return codes;
     }
 
-    // ========== 板块检测（扩展关键词） ==========
-    function detectSector(fundName) {
+    // ========== 板块检测（扩展关键词 + 利用基金类型） ==========
+    function detectSector(fundName, fundType) {
         if (!fundName) return null;
-        const keywords = [
+        // 优先从基金名称中匹配
+        const nameKeywords = [
             '医疗', '医药', '健康', '生物', '中药', '药',
-            '新能源', '光伏', '风电', '锂电', '电池', '能源',
+            '新能源', '光伏', '风电', '锂电', '电池', '能源', '碳中和',
             '环保', '环境',
-            '科技', '信息', '软件', '半导体', '芯片', '电子', '计算机', '人工智能', 'AI',
+            '科技', '信息', '软件', '半导体', '芯片', '电子', '计算机', '人工智能', 'AI', '大数据', '云计算',
             '高端制造', '制造', '工业', '机械', '设备',
             '军工', '航天', '国防',
             '消费', '食品', '饮料', '白酒', '酒',
             '金融', '银行', '保险', '证券', '券商',
             '地产', '房地产',
-            '农业', '农林牧渔', '养殖',
-            '有色', '金属', '煤炭', '钢铁', '化工', '材料',
-            '文体', '传媒', '游戏', '娱乐',
-            '互联网', '移动互联', '电商', '物流',
-            '黄金', '珠宝', '资源', '商品',
-            '优选', '精选', '价值', '成长', '蓝筹', '红利', '策略'
+            '农业', '农林牧渔', '养殖', '畜牧',
+            '有色', '金属', '煤炭', '钢铁', '化工', '材料', '资源',
+            '文体', '传媒', '游戏', '娱乐', '影视',
+            '互联网', '移动互联', '电商', '物流', '快递',
+            '黄金', '珠宝', '商品', '贵金属',
+            '优选', '精选', '价值', '成长', '蓝筹', '红利', '策略', '龙头', '核心'
         ];
-        for (let kw of keywords) {
+        for (let kw of nameKeywords) {
             if (fundName.includes(kw)) {
                 return kw;
+            }
+        }
+        // 如果没有匹配，尝试从基金类型中提取行业信息（例如 "股票型-行业-新能源"）
+        if (fundType) {
+            // 常见行业关键词
+            const typeKeywords = ['新能源', '医疗', '医药', '消费', '科技', '军工', '金融', '地产', '农业', '有色', '环保', '互联网'];
+            for (let kw of typeKeywords) {
+                if (fundType.includes(kw)) {
+                    return kw;
+                }
             }
         }
         return null;
@@ -1337,8 +729,9 @@
                     const riskTag = isRisk ? '<span class="risk-tag">15日跌幅大</span>' : '';
                     const dailyRiskTag = isDailyRisk ? '<span class="daily-risk-tag">当日大跌</span>' : '';
                     const maxDropTag = maxDropIn15 ? `<span class="maxdrop-tag">15日 ${maxDropIn15}%</span>` : '';
-                    // 板块标签
-                    const sector = detectSector(fund.name || '');
+                    // 板块标签：传入基金名称和类型（如果有）
+                    const fundType = masterFundList.find(f => f.code === code)?.type || '';
+                    const sector = detectSector(fund.name || '', fundType);
                     const sectorTag = sector ? `<span class="sector-tag">${sector}</span>` : '';
                     cardsHtml += `
                         <div class="card ${isRisk ? 'risk-highlight' : ''}" data-code="${code}">
@@ -1374,7 +767,7 @@
             container.className = 'card-grid';
             container.innerHTML = cardsHtml;
         } else {
-            // 列表视图添加板块标签
+            // 列表视图
             let listHtml = '';
             currentFundCodes.forEach(code => {
                 const fund = appData.fundsCache[code];
@@ -1384,7 +777,8 @@
                     const rate3 = computeRate(fund.netWorth, 3);
                     const rate5 = computeRate(fund.netWorth, 5);
                     const rate15 = computeRate(fund.netWorth, 15);
-                    const sector = detectSector(fund.name || '');
+                    const fundType = masterFundList.find(f => f.code === code)?.type || '';
+                    const sector = detectSector(fund.name || '', fundType);
                     const sectorTag = sector ? `<span class="sector-tag" style="margin-left:4px;">${sector}</span>` : '';
                     listHtml += `
                         <div class="list-row" data-code="${code}">
@@ -1465,7 +859,7 @@
         });
     }
 
-    // ========== 基金数据加载（扩展：获取基金经理和持仓，兼容多种变量名）==========
+    // ========== 基金数据加载（增强版：延迟读取额外信息，兼容多种字段）==========
     async function loadFundData(code, forceRefresh = false) {
         if (!forceRefresh && appData.fundsCache[code]?.netWorth) {
             return appData.fundsCache[code];
@@ -1479,6 +873,7 @@
             script.charset = 'utf-8';
             const timeoutId = setTimeout(() => { script.remove(); reject(new Error('超时')); updateCardError(code); }, 10000);
             script.onload = () => {
+                // 延迟稍长一点，确保所有变量加载完成
                 setTimeout(() => {
                     clearTimeout(timeoutId);
                     let netWorth = null;
@@ -1488,11 +883,16 @@
                         if (netWorth.length > MAX_HISTORY_POINTS) netWorth = netWorth.slice(-MAX_HISTORY_POINTS);
                     }
                     const name = window.fund_name || window.fS_name || code;
-                    // 尝试多个可能的变量名获取额外信息
-                    const manager = window.fund_manager || window.Data_fundManager || null;
-                    const asset = window.fund_asset || window.Data_assetAllocation || null;
-                    const stock = window.fund_stockportfolio || window.Data_stockPortfolio || null;
-                    
+                    // 尝试多个可能的变量名，兼容不同基金的数据格式
+                    let manager = window.fund_manager || window.Data_fundManager || null;
+                    let asset = window.fund_asset || window.Data_assetAllocation || null;
+                    let stock = window.fund_stockportfolio || window.Data_stockPortfolio || null;
+
+                    // 如果数据是字符串，尝试解析（极少数情况）
+                    if (typeof manager === 'string') try { manager = JSON.parse(manager); } catch(e) {}
+                    if (typeof asset === 'string') try { asset = JSON.parse(asset); } catch(e) {}
+                    if (typeof stock === 'string') try { stock = JSON.parse(stock); } catch(e) {}
+
                     GLOBAL_KEYS.forEach(k => delete window[k]);
                     script.remove();
                     if (netWorth && netWorth.length > 0) {
@@ -1505,7 +905,7 @@
                         reject(new Error('无净值'));
                         updateCardError(code);
                     }
-                }, 60);
+                }, 200); // 增加延迟到200ms
             };
             script.onerror = () => {
                 clearTimeout(timeoutId);
@@ -1568,21 +968,24 @@
         
         // 基金经理
         let managerHtml = '<div class="info-section"><h4>基金经理</h4>';
-        if (fund.manager && (Array.isArray(fund.manager) && fund.manager.length > 0)) {
-            managerHtml += '<div class="info-grid">';
-            fund.manager.forEach(m => {
-                const name = m.name || m.managerName || '--';
-                const workDate = m.workDate || m.startDate || '--';
+        if (fund.manager) {
+            if (Array.isArray(fund.manager) && fund.manager.length > 0) {
+                managerHtml += '<div class="info-grid">';
+                fund.manager.forEach(m => {
+                    const name = m.name || m.managerName || m.realName || '--';
+                    const workDate = m.workDate || m.startDate || m.任职日期 || '--';
+                    managerHtml += `<div class="info-item"><div class="info-label">经理</div><div class="info-value">${name}</div><div style="font-size:0.7rem;color:#5c6b93;">任职日期: ${workDate}</div></div>`;
+                });
+                managerHtml += '</div>';
+            } else if (typeof fund.manager === 'object') {
+                const name = fund.manager.name || fund.manager.managerName || fund.manager.realName || '--';
+                const workDate = fund.manager.workDate || fund.manager.startDate || fund.manager.任职日期 || '--';
+                managerHtml += '<div class="info-grid">';
                 managerHtml += `<div class="info-item"><div class="info-label">经理</div><div class="info-value">${name}</div><div style="font-size:0.7rem;color:#5c6b93;">任职日期: ${workDate}</div></div>`;
-            });
-            managerHtml += '</div>';
-        } else if (fund.manager && typeof fund.manager === 'object') {
-            // 可能是单个对象
-            const name = fund.manager.name || fund.manager.managerName || '--';
-            const workDate = fund.manager.workDate || fund.manager.startDate || '--';
-            managerHtml += '<div class="info-grid">';
-            managerHtml += `<div class="info-item"><div class="info-label">经理</div><div class="info-value">${name}</div><div style="font-size:0.7rem;color:#5c6b93;">任职日期: ${workDate}</div></div>`;
-            managerHtml += '</div>';
+                managerHtml += '</div>';
+            } else {
+                managerHtml += '<p style="color:#9aa9c2;">暂无基金经理信息</p>';
+            }
         } else {
             managerHtml += '<p style="color:#9aa9c2;">暂无基金经理信息</p>';
         }
@@ -1590,22 +993,19 @@
 
         // 资产配置
         let assetHtml = '<div class="info-section"><h4>资产配置</h4>';
-        if (fund.asset && Array.isArray(fund.asset) && fund.asset.length > 0) {
-            const lastAsset = fund.asset[fund.asset.length-1]; // 最新一期
-            assetHtml += '<div class="info-grid">';
-            assetHtml += `<div class="info-item"><div class="info-label">股票</div><div class="info-value">${lastAsset.stock !== undefined ? lastAsset.stock + '%' : '--'}</div></div>`;
-            assetHtml += `<div class="info-item"><div class="info-label">债券</div><div class="info-value">${lastAsset.bond !== undefined ? lastAsset.bond + '%' : '--'}</div></div>`;
-            assetHtml += `<div class="info-item"><div class="info-label">现金</div><div class="info-value">${lastAsset.cash !== undefined ? lastAsset.cash + '%' : '--'}</div></div>`;
-            assetHtml += `<div class="info-item"><div class="info-label">其他</div><div class="info-value">${lastAsset.other !== undefined ? lastAsset.other + '%' : '--'}</div></div>`;
-            assetHtml += '</div>';
-        } else if (fund.asset && typeof fund.asset === 'object') {
-            // 单个对象
-            assetHtml += '<div class="info-grid">';
-            assetHtml += `<div class="info-item"><div class="info-label">股票</div><div class="info-value">${fund.asset.stock !== undefined ? fund.asset.stock + '%' : '--'}</div></div>`;
-            assetHtml += `<div class="info-item"><div class="info-label">债券</div><div class="info-value">${fund.asset.bond !== undefined ? fund.asset.bond + '%' : '--'}</div></div>`;
-            assetHtml += `<div class="info-item"><div class="info-label">现金</div><div class="info-value">${fund.asset.cash !== undefined ? fund.asset.cash + '%' : '--'}</div></div>`;
-            assetHtml += `<div class="info-item"><div class="info-label">其他</div><div class="info-value">${fund.asset.other !== undefined ? fund.asset.other + '%' : '--'}</div></div>`;
-            assetHtml += '</div>';
+        if (fund.asset) {
+            // 尝试提取最新一期
+            let lastAsset = Array.isArray(fund.asset) ? fund.asset[fund.asset.length-1] : fund.asset;
+            if (lastAsset && typeof lastAsset === 'object') {
+                assetHtml += '<div class="info-grid">';
+                assetHtml += `<div class="info-item"><div class="info-label">股票</div><div class="info-value">${lastAsset.stock !== undefined ? lastAsset.stock + (typeof lastAsset.stock === 'number' ? '%' : '') : '--'}</div></div>`;
+                assetHtml += `<div class="info-item"><div class="info-label">债券</div><div class="info-value">${lastAsset.bond !== undefined ? lastAsset.bond + (typeof lastAsset.bond === 'number' ? '%' : '') : '--'}</div></div>`;
+                assetHtml += `<div class="info-item"><div class="info-label">现金</div><div class="info-value">${lastAsset.cash !== undefined ? lastAsset.cash + (typeof lastAsset.cash === 'number' ? '%' : '') : '--'}</div></div>`;
+                assetHtml += `<div class="info-item"><div class="info-label">其他</div><div class="info-value">${lastAsset.other !== undefined ? lastAsset.other + (typeof lastAsset.other === 'number' ? '%' : '') : '--'}</div></div>`;
+                assetHtml += '</div>';
+            } else {
+                assetHtml += '<p style="color:#9aa9c2;">暂无资产配置信息</p>';
+            }
         } else {
             assetHtml += '<p style="color:#9aa9c2;">暂无资产配置信息</p>';
         }
@@ -1616,8 +1016,8 @@
         if (fund.stock && Array.isArray(fund.stock) && fund.stock.length > 0) {
             stockHtml += '<table class="stock-table"><thead><tr><th>股票名称</th><th>占净值比例(%)</th></tr></thead><tbody>';
             fund.stock.slice(0, 10).forEach(s => {
-                const name = s.name || s.stockName || s.code || '--';
-                const percent = s.percent || s.percentage || s.ratio || '--';
+                const name = s.name || s.stockName || s.code || s.stockCode || '--';
+                const percent = s.percent || s.percentage || s.ratio || s.持有比例 || '--';
                 stockHtml += `<tr><td>${name}</td><td>${percent}</td></tr>`;
             });
             stockHtml += '</tbody></table>';
