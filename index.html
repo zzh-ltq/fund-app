@@ -5,7 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
     <meta name="apple-mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-status-bar-style" content="white">
-    <title>基金看板 · 右侧同步标记 · 图表优化</title>
+    <title>基金看板 · 细节优化版</title>
     <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
     <script src="https://sdk.amazonaws.com/js/aws-sdk-2.1692.0.min.js"></script>
     <style>
@@ -353,6 +353,7 @@
             display: flex;
             align-items: center;
             gap: 4px;
+            flex-wrap: wrap;
         }
         .group-summary-badge {
             display: inline-flex;
@@ -371,7 +372,7 @@
         /* 卡片网格 (卡片视图) */
         .card-grid { 
             display: grid; 
-            grid-template-columns: repeat(auto-fill, minmax(260px, 1fr)); 
+            grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); 
             gap: 16px; 
         }
         /* 列表视图 */
@@ -403,7 +404,7 @@
         }
         .list-row .fund-title {
             font-weight: 600;
-            font-size: 0.9rem;
+            font-size: 0.95rem;
             color: #0b1b32;
         }
         .list-row .fund-code {
@@ -417,6 +418,9 @@
             background: transparent;
             padding: 0;
             margin: 0;
+            display: flex;
+            gap: 8px;
+            align-items: center;
         }
         .list-row .rates-summary {
             flex: 2;
@@ -434,7 +438,7 @@
             margin-left: auto;
         }
 
-        /* 卡片样式 */
+        /* 卡片样式优化 */
         .card { 
             background: linear-gradient(135deg, #ffffff 0%, #fafbff 100%);
             border-radius: 24px; 
@@ -448,24 +452,108 @@
         .card.risk-highlight { border: 2px solid #f97316; }
         .card-header { display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 12px; gap: 8px; }
         .card-header-left { flex: 1; min-width: 0; overflow: hidden; }
-        .fund-title { font-weight: 600; font-size: 0.95rem; color: #0b1b32; line-height: 1.35; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; word-break: break-word; }
+        .fund-title { font-weight: 600; font-size: 1rem; color: #0b1b32; line-height: 1.4; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; word-break: break-word; }
         .fund-code { font-size: 0.7rem; background: #eef2f9; padding: 3px 8px; border-radius: 40px; color: #4b587c; margin-top: 4px; display: inline-block; }
         .delete-btn { background: white; border: 1px solid #e9ecf5; width: 30px; height: 30px; border-radius: 50%; font-size: 16px; color: #8f9fc0; cursor: pointer; display: flex; align-items: center; justify-content: center; flex-shrink: 0; }
         .delete-btn:hover { background: #fef2f2; border-color: #fecdd3; color: #ef4444; }
-        .latest-info { display: flex; justify-content: space-between; font-size: 0.75rem; background: linear-gradient(135deg, #f8faff 0%, #eff6ff 100%); padding: 8px 12px; border-radius: 18px; margin-bottom: 10px; }
-        .rates-grid { display: flex; flex-wrap: wrap; gap: 8px 4px; background: linear-gradient(135deg, #f8faff 0%, #eff6ff 100%); padding: 12px 10px; border-radius: 20px; margin-bottom: 8px; }
-        .rate-item { flex: 1 0 auto; min-width: 44px; text-align: center; }
-        .rate-label { font-size: 0.6rem; color: #5c6b93; margin-bottom: 2px; }
-        .rate-value { font-size: 0.95rem; font-weight: 600; }
+        
+        /* 最新信息区域 - 增加净值与涨跌幅间距 */
+        .latest-info { 
+            display: flex; 
+            justify-content: space-between; 
+            align-items: center; 
+            font-size: 0.8rem; 
+            background: linear-gradient(135deg, #f8faff 0%, #eff6ff 100%);
+            padding: 10px 14px; 
+            border-radius: 18px; 
+            margin-bottom: 12px; 
+            gap: 8px; /* 日期和右侧区域间距 */
+        }
+        .latest-info .date {
+            color: #4b587c;
+            font-weight: 500;
+            white-space: nowrap;
+        }
+        .latest-info .value {
+            font-weight: 600;
+            color: #0b1b32;
+        }
+        .latest-info .change {
+            font-weight: 600;
+            margin-left: 8px; /* 净值与涨跌幅之间的空隙 */
+        }
+        .latest-info .change.positive { color: #ef4444; }
+        .latest-info .change.negative { color: #16a34a; }
+
+        /* 多周期涨跌网格 */
+        .rates-grid { 
+            display: flex; 
+            flex-wrap: wrap; 
+            gap: 8px 4px; 
+            background: linear-gradient(135deg, #f8faff 0%, #eff6ff 100%);
+            padding: 12px 10px; 
+            border-radius: 20px; 
+            margin-bottom: 10px;
+        }
+        .rate-item { 
+            flex: 1 0 auto; 
+            min-width: 48px;
+            text-align: center; 
+        }
+        .rate-label { 
+            font-size: 0.6rem; 
+            color: #5c6b93; 
+            margin-bottom: 2px; 
+            display: block;
+        }
+        .rate-value { 
+            font-size: 0.85rem; 
+            font-weight: 600; 
+            line-height: 1.3;
+        }
         .positive { color: #ef4444; }
         .negative { color: #16a34a; }
-        .tag-group { display: flex; flex-wrap: wrap; gap: 4px; margin-top: 4px; }
+
+        .tag-group {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 4px;
+            margin-top: 6px;
+        }
         .risk-tag { font-size: 0.7rem; background: linear-gradient(135deg, #f97316 0%, #ea580c 100%); color: white; padding: 3px 10px; border-radius: 20px; }
         .daily-risk-tag { background: linear-gradient(135deg, #2e7d5e 0%, #16a34a 100%); color: white; padding: 3px 10px; border-radius: 20px; }
         .maxdrop-tag { background: linear-gradient(135deg, #6366f1 0%, #4f46e5 100%); color: white; padding: 3px 10px; border-radius: 20px; }
-        .move-controls { display: flex; align-items: center; gap: 6px; margin-top: 12px; padding-top: 10px; border-top: 1px dashed #dbe1ef; }
-        .move-select { flex: 1; padding: 6px 8px; border-radius: 20px; border: 1px solid #dbe1ef; font-size: 0.7rem; background: white; -webkit-appearance: none; appearance: none; background-image: url("data:image/svg+xml;charset=utf-8,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 24 24' fill='none' stroke='%232d3a5e' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M6 9l6 6 6-6'/%3E%3C/svg%3E"); background-repeat: no-repeat; background-position: right 8px center; background-size: 12px; padding-right: 24px; }
-        .move-btn { background: linear-gradient(135deg, #eef2f6 0%, #dbeafe 100%); border: none; border-radius: 20px; padding: 6px 12px; font-size: 0.7rem; cursor: pointer; color: #2d3a5e; font-weight: 500; }
+
+        .move-controls { 
+            display: flex; 
+            align-items: center; 
+            gap: 6px; 
+            margin-top: 12px; 
+            padding-top: 10px; 
+            border-top: 1px dashed #dbe1ef; 
+            font-size: 0.7rem;
+        }
+        .move-select { 
+            flex: 1; 
+            padding: 6px 8px; 
+            border-radius: 20px; 
+            border: 1px solid #dbe1ef; 
+            background: white;
+            font-size: 0.7rem;
+            -webkit-appearance: none; appearance: none;
+            background-image: url("data:image/svg+xml;charset=utf-8,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 24 24' fill='none' stroke='%232d3a5e' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M6 9l6 6 6-6'/%3E%3C/svg%3E");
+            background-repeat: no-repeat; background-position: right 8px center; background-size: 12px; padding-right: 24px;
+        }
+        .move-btn { 
+            background: linear-gradient(135deg, #eef2f6 0%, #dbeafe 100%); 
+            border: none; 
+            border-radius: 20px; 
+            padding: 6px 12px; 
+            font-size: 0.7rem; 
+            cursor: pointer; 
+            color: #2d3a5e; 
+            font-weight: 500; 
+        }
         .move-btn:hover { background: linear-gradient(135deg, #dbeafe 0%, #bfdbfe 100%); color: #1d4ed8; }
 
         /* 模态框美化 */
@@ -592,7 +680,7 @@
 <body>
 <div class="container">
     <div class="header">
-        <h1>📈 基金分组看板 <span>右侧同步标记</span></h1>
+        <h1>📈 基金分组看板 <span>细节优化</span></h1>
         <div class="sub">基金名称完整显示 · 15日最大累计跌幅 · 支持名称搜索</div>
         
         <div class="group-tabs-wrapper">
@@ -956,7 +1044,7 @@
         });
     }
 
-    // ========== 渲染右侧分组板块（带风险标记）==========
+    // ========== 渲染右侧分组板块（带风险标记，修复多余感叹号）==========
     function renderGroupSummaryPanel() {
         const listEl = document.getElementById('groupSummaryList');
         if (!listEl) return;
@@ -976,12 +1064,15 @@
         items.forEach(item => {
             const activeClass = item.id === currentGroupId ? 'active' : '';
             const valueClass = parseFloat(item.avg) >= 0 ? 'positive' : 'negative';
-            const badgeHtml = (item.has15 ? '<span class="warning-badge">!</span>' : '') + (item.hasDaily ? '<span class="green-heart">💚</span>' : '');
+            // 构建标记html，只有当有风险时才添加对应span，避免多余空白
+            let badgeHtml = '';
+            if (item.has15) badgeHtml += '<span class="warning-badge">!</span>';
+            if (item.hasDaily) badgeHtml += '<span class="green-heart">💚</span>';
             html += `
                 <div class="group-summary-item ${activeClass}" data-group-id="${item.id}">
                     <span class="group-summary-name">
                         ${item.name}
-                        <span class="group-summary-badge">${badgeHtml}</span>
+                        ${badgeHtml ? `<span class="group-summary-badge">${badgeHtml}</span>` : ''}
                     </span>
                     <span class="group-summary-value ${valueClass}">${item.avg}%</span>
                 </div>
@@ -1072,7 +1163,7 @@
         });
     }
 
-    // ========== 基金卡片/列表渲染（与之前相同，略作保留）==========
+    // ========== 基金卡片/列表渲染（优化数字汉字大小）==========
     function renderCards() {
         const container = document.getElementById('cardContainer');
         if (!container) return;
@@ -1118,7 +1209,10 @@
                             </div>
                             <div class="latest-info">
                                 <span class="date">${latestInfo.date}</span>
-                                <div><span class="value">${latestInfo.value}</span>${latestInfo.change !== null ? `<span class="change ${changeClass}">${latestInfo.change}%</span>` : ''}</div>
+                                <div>
+                                    <span class="value">${latestInfo.value}</span>
+                                    ${latestInfo.change !== null ? `<span class="change ${changeClass}">${latestInfo.change}%</span>` : ''}
+                                </div>
                             </div>
                             <div class="rates-grid">${ratesHtml}</div>
                             <div class="tag-group">${maxDropTag}${riskTag}${dailyRiskTag}</div>
@@ -1274,7 +1368,7 @@
         renderGroupSummaryPanel();
     }
 
-    // ========== 模态框（美化） ==========
+    // ========== 模态框 ==========
     function openChartModal() {
         if (!currentModalFund) return;
         const modal = document.getElementById('chartModal');
