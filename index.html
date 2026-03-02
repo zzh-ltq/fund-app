@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
-    <title>基金看板 · 板块下拉修复</title>
+    <title>基金看板 · 优化基金持仓信息展示</title>
     <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
     <script src="https://sdk.amazonaws.com/js/aws-sdk-2.1692.0.min.js"></script>
     <style>
@@ -134,10 +134,17 @@
         .info-item { background: white; border-radius: 16px; padding: 12px; box-shadow: 0 2px 8px rgba(0,0,0,0.02); }
         .info-label { font-size: 0.7rem; color: #5c6b93; margin-bottom: 4px; }
         .info-value { font-weight: 600; color: #0b1b32; }
-        .stock-table { width: 100%; border-collapse: collapse; font-size: 0.75rem; }
-        .stock-table th { background: #eef2f9; padding: 8px; text-align: left; }
-        .stock-table td { padding: 6px 8px; border-bottom: 1px solid #e9ecf5; }
+        
+        .stock-table { width: 100%; border-collapse: collapse; font-size: 0.8rem; }
+        .stock-table th { background: #eef2f9; padding: 10px; text-align: left; color: #2d3a5e; font-weight: 600; }
+        .stock-table th:first-child { border-top-left-radius: 8px; border-bottom-left-radius: 8px; }
+        .stock-table th:last-child { border-top-right-radius: 8px; border-bottom-right-radius: 8px; text-align: right; }
+        .stock-table td { padding: 10px; border-bottom: 1px solid #e9ecf5; color: #0b1b32; }
+        .stock-table td:nth-child(3), .stock-table td:nth-child(4) { text-align: right; font-weight: 500; }
+        .stock-table td:nth-child(2) { font-family: 'JetBrains Mono', monospace; color: #4b587c; font-size: 0.75rem; }
         .stock-table tr:hover td { background: #f8faff; }
+        .stock-table tr:last-child td { border-bottom: none; }
+
         table { width: 100%; border-collapse: collapse; font-size: 0.8rem; }
         th { background: #f0f2f8; position: sticky; top: 0; padding: 12px 8px; text-align: center; color: #2d3a5e; font-weight: 600; }
         td { padding: 10px 6px; border-bottom: 1px solid #e9ecf5; text-align: center; color: #0b1b32; }
@@ -158,8 +165,8 @@
 <body>
 <div class="container">
     <div class="header">
-        <h1>📈 基金分组看板 <span>板块下拉修复</span></h1>
-        <div class="sub">基金名称完整显示 · 15日最大累计跌幅 · 手动选择板块</div>
+        <h1>📈 基金分组看板 <span>优化持仓分析</span></h1>
+        <div class="sub">基金名称完整显示 · 15日最大累计跌幅 · 持仓实时分析</div>
         
         <div class="group-tabs-wrapper">
             <div class="group-tabs" id="groupTabs"></div>
@@ -218,7 +225,7 @@
         <span class="sync-status" id="syncStatus"></span>
     </div>
     <div class="footer-note">
-        ✨ 点击卡片查看曲线 · 点击板块标签可修改
+        ✨ 点击卡片查看曲线及股票持仓明细 · 点击板块标签可修改
     </div>
 </div>
 
@@ -234,7 +241,7 @@
             <button class="period-btn" data-days="30">30日</button>
             <button class="period-btn" data-days="60">60日</button>
             <button class="period-btn" data-days="90">90日</button>
-            <button class="period-btn" id="fundHoldingsBtn">📋 持仓</button>
+            <button class="period-btn" id="fundHoldingsBtn">📋 持仓分析</button>
         </div>
         <!-- 曲线和表格区域 (默认显示) -->
         <div id="chartTableArea">
@@ -257,7 +264,7 @@
 (function() {
     // ========== 核心配置 ==========
     const STORAGE_KEY = 'funds_app_data_v3';
-    const PERIODS = [3, 5, 7, 10, 15, 20];
+    const PERIODS =[3, 5, 7, 10, 15, 20];
     const DROP_THRESHOLD = -8.5;
     const DAILY_RISK_THRESHOLD = -5.0;
     const MAX_HISTORY_POINTS = 120;
@@ -282,7 +289,7 @@
         });
     } catch (e) { console.warn('S3 init failed', e); }
 
-    let appData = { groups: [], fundsCache: {} };
+    let appData = { groups:[], fundsCache: {} };
     let currentGroupId = 'default';
     let chartInstance = null;
     let currentModalFund = null;
@@ -295,12 +302,12 @@
     const UTC_OFFSET = 28800000;
 
     // ---------- 基金全量列表 ----------
-    let masterFundList = [];
+    let masterFundList =[];
     let masterListLoaded = false;
     let masterListLoading = null;
 
     // 预定义板块列表（可扩展）
-    const SECTOR_LIST = [
+    const SECTOR_LIST =[
         '医疗', '医药', '健康', '生物', '中药',
         '新能源', '光伏', '风电', '锂电', '电池', '能源',
         '环保', '环境',
@@ -370,7 +377,7 @@
         }).catch(err => {
             console.warn('加载基金列表失败', err);
             masterFundList = [];
-            return [];
+            return[];
         });
         return masterListLoading;
     }
@@ -383,17 +390,57 @@
         document.body.appendChild(toast);
         setTimeout(() => toast.remove(), 2000);
     }
+
+    // 用于发起 JSONP 请求的基础方法
+    function fetchJsonp(url, callbackParam, timeoutMs = 10000) {
+        return new Promise((resolve, reject) => {
+            const cbName = `jsonp_${Date.now()}_${Math.random().toString(16).slice(2)}`;
+            const script = document.createElement('script');
+            const sep = url.includes('?') ? '&' : '?';
+            const timer = setTimeout(() => {
+                cleanup();
+                reject(new Error('timeout'));
+            }, timeoutMs);
+            const cleanup = () => {
+                clearTimeout(timer);
+                try { delete window[cbName]; } catch { window[cbName] = undefined; }
+                if (script.parentNode) script.parentNode.removeChild(script);
+            };
+            window[cbName] = (data) => {
+                cleanup();
+                resolve(data);
+            };
+            script.onerror = () => {
+                cleanup();
+                reject(new Error('script load failed'));
+            };
+            script.src = `${url}${sep}${callbackParam}=${cbName}`;
+            document.head.appendChild(script);
+        });
+    }
+
+    // 智能过滤：如果为纯债或非股票型，不再拉取其股票持仓
+    function isLikelyNoStockHoldingsFund(fundName) {
+        const name = (fundName || '').toString();
+        if (!name) return false;
+        if (/\bETF\b/i.test(name)) return true;
+        if (name.includes('债券') || name.includes('纯债') || name.includes('短债') || name.includes('货币') || name.includes('现金') || name.includes('理财')) return true;
+        return false;
+    }
+
     function checkFundDuplicate(groupId, fundCode) {
         const group = appData.groups.find(g => g.id === groupId);
         return group ? group.fundCodes.includes(fundCode) : false;
     }
+
     function getAllFundCodes() {
-        const allCodes = [];
+        const allCodes =[];
         appData.groups.forEach(group => {
             if (group.id !== 'default') allCodes.push(...group.fundCodes);
         });
         return [...new Set(allCodes)];
     }
+
     function formatDate(dateInput) {
         if (!dateInput) return '';
         if (typeof dateInput === 'string' && /^\d{4}-\d{2}-\d{2}$/.test(dateInput)) return dateInput;
@@ -408,15 +455,18 @@
         const d = new Date(dateInput);
         return `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`;
     }
+
     function computeRate(netWorth, days) {
         if (!netWorth || netWorth.length < days) return null;
         return ((netWorth[netWorth.length-1].y - netWorth[netWorth.length-days].y) / netWorth[netWorth.length-days].y * 100).toFixed(2);
     }
+
     function compute15DayChange(netWorth, days) {
         if (!netWorth || netWorth.length < days) return null;
         const slice = netWorth.slice(-days);
         return ((slice[slice.length-1].y - slice[0].y) / slice[0].y * 100).toFixed(2);
     }
+
     function computeMaxDropInPeriod(netWorth, days) {
         if (!netWorth || netWorth.length < days) return null;
         const slice = netWorth.slice(-days);
@@ -428,6 +478,7 @@
         }
         return min === Infinity ? null : min.toFixed(2);
     }
+
     function getLatestInfo(netWorth) {
         if (!netWorth || !netWorth.length) return { date: '', value: '', change: null };
         const latest = netWorth[netWorth.length-1];
@@ -435,8 +486,9 @@
         const change = prev ? ((latest.y - prev.y)/prev.y*100).toFixed(2) : null;
         return { date: formatDate(latest.x), value: latest.y.toFixed(4), change };
     }
+
     function sortFundCodes(fundCodes) {
-        const codes = [...fundCodes];
+        const codes =[...fundCodes];
         codes.sort((a,b) => {
             const fa = appData.fundsCache[a], fb = appData.fundsCache[b];
             if (!fa || !fa.netWorth) return 1;
@@ -467,13 +519,13 @@
                     if (!appData.fundsCache) appData.fundsCache = {};
                 } else {
                     const oldCodes = Array.isArray(parsed) ? parsed : [];
-                    appData = { groups: [{ id:'default', name:'全部', fundCodes:[] }], fundsCache:{} };
+                    appData = { groups:[{ id:'default', name:'全部', fundCodes:[] }], fundsCache:{} };
                     if (oldCodes.length > 0) {
                         appData.groups.push({ id:'group_'+Date.now(), name:'我的基金', fundCodes:oldCodes });
                     }
                 }
             } else {
-                appData = { groups: [{ id:'default', name:'全部', fundCodes:[] }], fundsCache:{} };
+                appData = { groups:[{ id:'default', name:'全部', fundCodes:[] }], fundsCache:{} };
             }
         } catch (e) {
             appData = { groups: [{ id:'default', name:'全部', fundCodes:[] }], fundsCache:{} };
@@ -482,12 +534,14 @@
         const defaultGroup = appData.groups.find(g => g.id === 'default');
         if (defaultGroup) defaultGroup.fundCodes = getAllFundCodes();
     }
+
     function saveAppData() {
         const defaultGroup = appData.groups.find(g => g.id === 'default');
         if (defaultGroup) defaultGroup.fundCodes = getAllFundCodes();
         localStorage.setItem(STORAGE_KEY, JSON.stringify(appData));
         if (s3) saveToCloud(appData).catch(err => console.warn('cloud sync failed', err));
     }
+
     async function loadFromCloud() {
         if (!s3) throw new Error('S3未初始化');
         const params = { Bucket: R2_CONFIG.bucketName, Key: 'funds_app_data_v3.json' };
@@ -499,6 +553,7 @@
             throw e;
         }
     }
+
     async function saveToCloud(data) {
         if (!s3) return;
         await s3.putObject({
@@ -528,6 +583,7 @@
         if (count === 0) return null;
         return (sum / count).toFixed(2);
     }
+
     function has15DayRisk(groupId) {
         const group = appData.groups.find(g => g.id === groupId);
         if (!group || group.id === 'default') return false;
@@ -538,6 +594,7 @@
             return change15D !== null && parseFloat(change15D) <= DROP_THRESHOLD;
         });
     }
+
     function hasDailyRisk(groupId) {
         const group = appData.groups.find(g => g.id === groupId);
         if (!group || group.id === 'default') return false;
@@ -608,7 +665,7 @@
         const groupSelect = document.getElementById('groupSelect');
         if (!tabsContainer) return;
         let tabsHtml = '', optionsHtml = '';
-        const nonDefaultGroups = [];
+        const nonDefaultGroups =[];
         appData.groups.forEach(group => {
             const isDefault = group.id === 'default';
             const has15 = isDefault ? false : has15DayRisk(group.id);
@@ -696,7 +753,7 @@
                 const isNameExists = appData.groups.some(g => g.name.trim() === newName.trim());
                 if (isNameExists) { showToast('分组名称已存在'); return; }
                 const newId = 'group_' + Date.now() + '_' + Math.random().toString(36).substr(2,6);
-                appData.groups.push({ id: newId, name: newName.trim(), fundCodes: [] });
+                appData.groups.push({ id: newId, name: newName.trim(), fundCodes:[] });
                 saveAppData(); 
                 renderGroups();
                 renderGroupSummaryPanel();
@@ -736,7 +793,7 @@
             item.textContent = sector;
             item.onclick = (e) => {
                 e.stopPropagation();
-                let selected = fund.sectors || [];
+                let selected = fund.sectors ||[];
                 if (selected.includes(sector)) {
                     selected = selected.filter(s => s !== sector);
                 } else {
@@ -748,7 +805,6 @@
                 }
                 fund.sectors = selected;
                 saveAppData();
-                // 刷新卡片上的板块标签（不重建整个卡片）
                 renderCardSectors(cardElement, fund);
                 dropdown.classList.remove('active');
             };
@@ -759,22 +815,17 @@
         // 点击按钮切换下拉菜单
         btnSpan.onclick = (e) => {
             e.stopPropagation();
-            // 关闭其他所有下拉菜单
             document.querySelectorAll('.sector-dropdown.active').forEach(d => d.classList.remove('active'));
             dropdown.classList.toggle('active');
         };
 
-        // 将按钮添加到 wrapper 末尾
         wrapper.appendChild(sectorWrapper);
-
-        // 渲染已有的板块标签
         renderCardSectors(cardElement, fund);
     }
 
     function renderCardSectors(cardElement, fund) {
         const wrapper = cardElement.querySelector('.fund-code-wrapper');
         if (!wrapper) return;
-        // 移除所有现有的板块标签（不包括+按钮本身）
         const existingTags = wrapper.querySelectorAll('.sector-tag:not(.sector-selector .sector-tag)');
         existingTags.forEach(el => el.remove());
 
@@ -789,7 +840,6 @@
                     saveAppData();
                     tag.remove();
                 };
-                // 插入到+按钮之前
                 const selector = wrapper.querySelector('.sector-selector');
                 if (selector) {
                     wrapper.insertBefore(tag, selector);
@@ -804,7 +854,7 @@
     function renderCards() {
         const container = document.getElementById('cardContainer');
         if (!container) return;
-        let currentFundCodes = [];
+        let currentFundCodes =[];
         const currentGroup = appData.groups.find(g => g.id === currentGroupId);
         if (currentGroup) {
             currentFundCodes = currentGroupId === 'default' ? getAllFundCodes() : [...currentGroup.fundCodes];
@@ -845,7 +895,6 @@
                                     <div class="fund-title">${fund.name || code}</div>
                                     <div class="fund-code-wrapper">
                                         <span class="fund-code">${code}</span>
-                                        <!-- 板块下拉组件将动态插入此处 -->
                                     </div>
                                 </div>
                                 <button class="delete-btn" data-code="${code}">✕</button>
@@ -878,13 +927,11 @@
             });
             container.className = 'card-grid';
             container.innerHTML = cardsHtml;
-            // 为每个卡片附加板块下拉菜单
             document.querySelectorAll('.card[data-code]').forEach(card => {
                 const code = card.getAttribute('data-code');
                 attachSectorDropdown(card, code);
             });
         } else {
-            // 列表视图（简化处理，同样支持板块展示）
             let listHtml = '';
             currentFundCodes.forEach(code => {
                 const fund = appData.fundsCache[code];
@@ -894,7 +941,7 @@
                     const rate3 = computeRate(fund.netWorth, 3);
                     const rate5 = computeRate(fund.netWorth, 5);
                     const rate15 = computeRate(fund.netWorth, 15);
-                    const sectorTags = (fund.sectors || []).map(s => `<span class="sector-tag" style="margin-left:4px;">${s}</span>`).join('');
+                    const sectorTags = (fund.sectors ||[]).map(s => `<span class="sector-tag" style="margin-left:4px;">${s}</span>`).join('');
                     listHtml += `
                         <div class="list-row" data-code="${code}">
                             <div class="fund-main">
@@ -923,7 +970,6 @@
             container.innerHTML = listHtml;
         }
 
-        // 绑定删除、移动、点击事件
         document.querySelectorAll('.delete-btn').forEach(btn => {
             btn.addEventListener('click', async (e) => {
                 e.stopPropagation();
@@ -974,7 +1020,6 @@
             });
         });
 
-        // 点击页面其他区域关闭所有下拉菜单
         document.addEventListener('click', (e) => {
             if (!e.target.closest('.sector-selector')) {
                 document.querySelectorAll('.sector-dropdown.active').forEach(d => d.classList.remove('active'));
@@ -987,10 +1032,9 @@
         if (!forceRefresh && appData.fundsCache[code]?.netWorth) {
             return appData.fundsCache[code];
         }
-        renderLoadingCard(code);
 
         return new Promise((resolve, reject) => {
-            const GLOBAL_KEYS = ['Data_netWorthTrend','fund_name','fS_name','fund_manager','fund_asset','fund_stockportfolio'];
+            const GLOBAL_KEYS =['Data_netWorthTrend','fund_name','fS_name','fund_manager','fund_asset','fund_stockportfolio'];
             GLOBAL_KEYS.forEach(k => delete window[k]);
 
             const script = document.createElement('script');
@@ -1021,16 +1065,20 @@
                     script.remove();
 
                     if (netWorth && netWorth.length > 0) {
-                        const fundInfo = { code, name, netWorth, error: false, manager, asset, stock, sectors: [] };
+                        const fundInfo = { code, name, netWorth, error: false, manager, asset, stock, sectors: appData.fundsCache[code]?.sectors || [] };
                         appData.fundsCache[code] = fundInfo;
                         
-                        // 异步加载持仓数据
-                        loadFundHoldings(code).then(holdings => {
-                            appData.fundsCache[code].holdings = holdings;
-                            if (currentModalFund && currentModalFund.code === code) {
-                                renderFundHoldings();
-                            }
-                        }).catch(err => console.warn(`获取${code}持仓失败`, err));
+                        // 异步加载持仓数据（对疑似非股票型基金免去请求）
+                        if (!isLikelyNoStockHoldingsFund(name)) {
+                            loadFundHoldings(code).then(holdings => {
+                                appData.fundsCache[code].holdings = holdings;
+                                if (currentModalFund && currentModalFund.code === code) {
+                                    renderFundHoldings();
+                                }
+                            }).catch(err => console.warn(`获取${code}持仓失败`, err));
+                        } else {
+                            appData.fundsCache[code].holdings =[];
+                        }
                         
                         resolve(fundInfo);
                         renderCards();
@@ -1052,122 +1100,135 @@
         });
     }
 
-    function renderLoadingCard(code) {}
     function updateCardError(code) {
-        appData.fundsCache[code] = { code, name: code, error: true };
+        appData.fundsCache[code] = { code, name: code, error: true, sectors: appData.fundsCache[code]?.sectors ||[] };
         renderCards();
         renderGroupSummaryPanel();
     }
 
-    // ========== 基金持仓获取（参考附件代码） ==========
-    async function loadFundHoldings(code) {
-        try {
-            const holdings = await fetchBaiduHoldings(code);
-            if (holdings && holdings.length > 0) return holdings;
-        } catch (e) {
-            console.warn('百度持仓失败，尝试东财', e);
-        }
-        try {
-            const holdings = await fetchEastMoneyHoldings(code);
-            return holdings;
-        } catch (e) {
-            console.warn('东财持仓也失败', e);
-            return [];
-        }
-    }
-
+    // ========== 基金持仓获取（优化的多数据源组合） ==========
     async function fetchBaiduHoldings(code) {
         const url = `https://gushitong.baidu.com/opendata?resource_id=5803&query=${code}&new_need_di=1&source=qieman`;
-        return new Promise((resolve, reject) => {
-            const callbackName = `baidu_holdings_${code}_${Date.now()}`;
-            const timeout = setTimeout(() => {
-                cleanup();
-                reject(new Error('百度JSONP超时'));
-            }, 10000);
-            const cleanup = () => {
-                clearTimeout(timeout);
-                delete window[callbackName];
-                const script = document.getElementById(`script_${callbackName}`);
-                if (script) script.remove();
-            };
-            window[callbackName] = (data) => {
-                try {
-                    const result = data?.Result?.[0];
-                    const tabs = result?.DisplayData?.resultData?.tplData?.result?.content?.tabs;
-                    if (!tabs) { cleanup(); reject(new Error('无tabs')); return; }
-                    const posTab = tabs.find(t => t.type === 'position') || tabs[0];
-                    const heavyStock = posTab?.content?.heavyStock?.body;
-                    if (!heavyStock || !Array.isArray(heavyStock)) { cleanup(); reject(new Error('无持仓数据')); return; }
-                    const holdings = heavyStock.map(item => ({
-                        name: item.name || '',
-                        code: item.code || '',
-                        ratio: parseFloat(item.positionProportion?.replace('%', '')) || 0
-                    })).filter(h => h.code && h.name && h.ratio > 0).slice(0, 10);
-                    cleanup();
-                    resolve(holdings);
-                } catch (err) {
-                    cleanup();
-                    reject(err);
-                }
-            };
-            const script = document.createElement('script');
-            script.id = `script_${callbackName}`;
-            script.src = `${url}&callback=${callbackName}`;
-            script.onerror = () => {
-                cleanup();
-                reject(new Error('百度JSONP加载失败'));
-            };
-            document.head.appendChild(script);
-        });
+        let data;
+        try {
+            data = await fetchJsonp(url, 'cb', 5000);
+        } catch (e) {
+            data = await fetchJsonp(url, 'callback', 5000);
+        }
+        
+        const result = data?.Result?.[0];
+        const tabs = result?.DisplayData?.resultData?.tplData?.result?.content?.tabs;
+        if (!tabs) throw new Error('无tabs');
+        const posTab = tabs.find(t => t.type === 'position') || tabs[0];
+        const heavyStock = posTab?.content?.heavyStock?.body;
+        if (!heavyStock || !Array.isArray(heavyStock)) throw new Error('无持仓数据');
+        
+        return heavyStock.map(item => ({
+            name: item.name || '',
+            code: item.code || '',
+            ratio: parseFloat(item.positionProportion?.replace('%', '')) || 0
+        })).filter(h => h.code && h.name && h.ratio > 0).slice(0, 10);
     }
 
     async function fetchEastMoneyHoldings(code) {
         const url = `https://fundf10.eastmoney.com/FundArchivesDatas.aspx?type=jjcc&topline=10&code=${code}&year=&month=&rt=${Date.now()}`;
-        return new Promise((resolve, reject) => {
-            const callbackName = `eastmoney_holdings_${code}_${Date.now()}`;
-            const timeout = setTimeout(() => {
-                cleanup();
-                reject(new Error('东财JSONP超时'));
-            }, 10000);
-            const cleanup = () => {
-                clearTimeout(timeout);
-                delete window[callbackName];
-                const script = document.getElementById(`script_${callbackName}`);
-                if (script) script.remove();
-            };
-            window[callbackName] = (data) => {
+        const data = await fetchJsonp(url, 'callback', 8000);
+        const html = data?.content || '';
+        const doc = new DOMParser().parseFromString(html, 'text/html');
+        const tables = Array.from(doc.querySelectorAll('table'));
+        const table = tables.find(t => {
+            const thText = (t.querySelector('thead')?.textContent || t.textContent || '').replace(/\s+/g, '');
+            return thText.includes('股票代码') && thText.includes('股票名称') && thText.includes('占净值');
+        }) || tables[0];
+        
+        let holdings =[];
+        if (table) {
+            const ths = Array.from(table.querySelectorAll('thead th'));
+            const norm = (s) => (s || '').replace(/\s+/g, '').replace(/\u00a0/g, '');
+            const idxCode = ths.findIndex(th => norm(th.textContent).includes('股票代码'));
+            const idxName = ths.findIndex(th => norm(th.textContent).includes('股票名称'));
+            const idxRatio = ths.findIndex(th => {
+                const t = norm(th.textContent);
+                return t.includes('占净值') || t.includes('占净值比例');
+            });
+
+            const rows = Array.from(table.querySelectorAll('tbody tr'));
+            holdings = rows.map(tr => {
+                const tds = Array.from(tr.querySelectorAll('td'));
+                if (tds.length === 0) return null;
+                const c = (tds[idxCode]?.textContent || '').trim();
+                const n = (tds[idxName]?.textContent || '').trim();
+                const ratioText = (tds[idxRatio]?.textContent || '').trim();
+                let ratio = 0;
+                const m = ratioText.match(/(\d+(\.\d+)?)/);
+                if (m) ratio = parseFloat(m[1]);
+                return { code: c, name: n, ratio };
+            }).filter(x => x && x.code && x.name).slice(0, 10);
+        }
+        return holdings;
+    }
+
+    function getEastmoneySecId(code) {
+        const c = String(code).match(/\d{6}/)?.[0] || String(code).substring(0, 6);
+        if (!/^\d{6}$/.test(c)) return c;
+        // 东财格式简单适配：由于基金持仓以沪深A股港股为主，常见股票段处理
+        return (c.startsWith('6') || c.startsWith('9') || c.startsWith('4') || c.startsWith('8') ? `1.${c}` : `0.${c}`);
+    }
+
+    async function fetchStockQuotes(holdings) {
+        const quotes = await Promise.all(holdings.map(async h => {
+            const secid = getEastmoneySecId(h.code);
+            const url = `https://push2.eastmoney.com/api/qt/stock/get?secid=${secid}&fields=f2,f3,f4,f43,f60,f100&ut=fa5fd1943c7b386f172d6893dbfba10b&_=${Date.now()}`;
+            try {
+                let qjson;
                 try {
-                    const html = data?.content || '';
-                    const regex = /<td[^>]*>([^<]+)<\/td>/g;
-                    const matches = html.match(/<td[^>]*>([^<]+)<\/td>/g);
-                    if (!matches) { cleanup(); reject(new Error('解析失败')); return; }
-                    const values = matches.map(m => m.replace(/<[^>]+>/g, '').trim());
-                    const holdings = [];
-                    for (let i = 0; i < Math.min(values.length, 30); i += 4) {
-                        if (i+2 < values.length) {
-                            holdings.push({
-                                code: values[i],
-                                name: values[i+1],
-                                ratio: parseFloat(values[i+2]) || 0
-                            });
+                    qjson = await fetchJsonp(url, 'cb', 5000);
+                } catch {
+                    qjson = await fetchJsonp(url, 'callback', 5000);
+                }
+                if (qjson?.data) {
+                    const d = qjson.data;
+                    const last = Number(d.f43 ?? d.f2);
+                    const prevClose = Number(d.f60);
+                    const chgRaw = d.f3;
+                    let chg = (typeof chgRaw === 'number') ? chgRaw : Number(chgRaw);
+                    if (!Number.isFinite(chg)) {
+                        if (Number.isFinite(last) && Number.isFinite(prevClose) && prevClose !== 0) {
+                            chg = ((last - prevClose) / prevClose) * 100;
+                        } else {
+                            chg = 0;
                         }
                     }
-                    cleanup();
-                    resolve(holdings.filter(h => h.code && h.name).slice(0, 10));
-                } catch (err) {
-                    cleanup();
-                    reject(err);
+                    return { ...h, chg, price: Number.isFinite(last) ? last : 0, industry: d.f100 || '其他' };
                 }
-            };
-            const script = document.createElement('script');
-            script.id = `script_${callbackName}`;
-            script.src = `${url}&callback=${callbackName}`;
-            script.onerror = () => {
-                cleanup();
-                reject(new Error('东财JSONP加载失败'));
-            };
-            document.head.appendChild(script);
-        });
+            } catch (err) { }
+            return { ...h, chg: 0, price: 0, industry: '其他' };
+        }));
+        return quotes;
+    }
+
+    async function loadFundHoldings(code) {
+        let holdings =[];
+        try {
+            holdings = await fetchBaiduHoldings(code);
+        } catch (e) {
+            console.warn('百度持仓失败，尝试东财', e);
+            try {
+                holdings = await fetchEastMoneyHoldings(code);
+            } catch (err) {
+                console.warn('东财持仓也失败', err);
+            }
+        }
+        
+        // 成功获取持仓后，进一步获取实时的股票行情涨跌幅
+        if (holdings.length > 0) {
+            try {
+                holdings = await fetchStockQuotes(holdings);
+            } catch (e) {
+                console.warn('获取股票行情失败', e);
+            }
+        }
+        return holdings;
     }
 
     // ========== 模态框持仓渲染 ==========
@@ -1175,19 +1236,63 @@
         const fund = currentModalFund;
         if (!fund) return;
         const container = document.getElementById('fundHoldingsContent');
-        const holdings = fund.holdings || [];
+        const holdings = fund.holdings ||[];
         
+        if (isLikelyNoStockHoldingsFund(fund.name)) {
+            container.innerHTML = '<p style="text-align:center;color:#9aa9c2;padding:40px;">该基金为非股票型基金或无需展示股票持仓</p>';
+            return;
+        }
+
         if (holdings.length === 0) {
-            container.innerHTML = '<p style="text-align:center;color:#9aa9c2;padding:40px;">暂无持仓数据</p>';
+            container.innerHTML = '<p style="text-align:center;color:#9aa9c2;padding:40px;">暂无股票持仓数据</p>';
             return;
         }
         
-        let html = '<div class="info-section"><h4>前十大股票持仓</h4>';
-        html += '<table class="stock-table"><thead><tr><th>股票名称</th><th>股票代码</th><th>占净值比例(%)</th></tr></thead><tbody>';
-        holdings.forEach(h => {
-            html += `<tr><td>${h.name}</td><td>${h.code}</td><td>${h.ratio.toFixed(2)}%</td></tr>`;
+        let html = '<div class="info-section"><h4 style="margin-bottom: 12px; color: #0b1b32; font-size: 1rem;">前十大股票持仓</h4>';
+        html += '<div style="overflow-x:auto;"><table class="stock-table"><thead><tr><th>股票名称</th><th>代码</th><th>占比(%)</th><th>实时涨跌幅</th></tr></thead><tbody>';
+        
+        holdings.forEach((h) => {
+            let chgText = '--';
+            let chgClass = '';
+            if (h.chg !== undefined) {
+                chgText = (h.chg > 0 ? '+' : '') + h.chg.toFixed(2) + '%';
+                chgClass = h.chg > 0 ? 'positive' : (h.chg < 0 ? 'negative' : '');
+            }
+            html += `<tr>
+                <td style="font-weight: 500;">${h.name}</td>
+                <td>${h.code}</td>
+                <td>${h.ratio.toFixed(2)}</td>
+                <td class="${chgClass}" style="font-weight: 600;">${chgText}</td>
+            </tr>`;
         });
-        html += '</tbody></table></div>';
+        html += '</tbody></table></div></div>';
+        
+        let top10Weight = 0;
+        let top10Contribution = 0;
+        let hasChg = false;
+        holdings.forEach(h => {
+            if (h.ratio) {
+                top10Weight += h.ratio;
+                if (h.chg !== undefined) {
+                    top10Contribution += (h.ratio / 100) * h.chg;
+                    hasChg = true;
+                }
+            }
+        });
+        
+        if (top10Weight > 0 && hasChg) {
+            let avgChg = top10Contribution / (top10Weight / 100);
+            const chgClass = avgChg > 0 ? 'positive' : (avgChg < 0 ? 'negative' : '');
+            html += `<div style="margin-top: 16px; padding: 14px 16px; background: linear-gradient(135deg, #f8faff 0%, #eff6ff 100%); border-radius: 12px; font-size: 0.85rem; color: #2d3a5e; border: 1px solid #dbeafe;">
+                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 6px;">
+                    <span style="color: #4b587c;">前十持仓总占比：</span><strong style="font-size: 0.95rem; color: #0b1b32;">${top10Weight.toFixed(2)}%</strong>
+                </div>
+                <div style="display: flex; justify-content: space-between; align-items: center;">
+                    <span style="color: #4b587c;">前十加权估算涨幅：</span><strong class="${chgClass}" style="font-size: 0.95rem;">${(avgChg > 0 ? '+' : '') + avgChg.toFixed(2)}%</strong>
+                </div>
+            </div>`;
+        }
+        
         container.innerHTML = html;
     }
 
@@ -1218,18 +1323,22 @@
             renderFundHoldings();
         });
     }
+
     function showChartTable() {
         document.getElementById('chartTableArea').style.display = 'block';
         document.getElementById('fundHoldingsArea').style.display = 'none';
     }
+
     function showHoldings() {
         document.getElementById('chartTableArea').style.display = 'none';
         document.getElementById('fundHoldingsArea').style.display = 'block';
     }
+
     function closeChartModal() {
         document.getElementById('chartModal').classList.remove('active');
         if (chartInstance) { chartInstance.destroy(); chartInstance = null; }
     }
+
     function renderFundChart(days) {
         if (!currentModalFund || !currentModalFund.netWorth) return;
         const ctx = document.getElementById('fundChart').getContext('2d');
@@ -1239,7 +1348,7 @@
             type: 'line',
             data: {
                 labels: data.map(item => formatDate(item.x)),
-                datasets: [{
+                datasets:[{
                     label: '单位净值', data: data.map(item => item.y),
                     borderColor: '#3b82f6', backgroundColor: 'rgba(59,130,246,0.05)',
                     borderWidth: 3, tension: 0.2, fill: true, pointRadius: 3,
@@ -1253,6 +1362,7 @@
             }
         });
     }
+
     function renderNetWorthTable(days) {
         if (!currentModalFund || !currentModalFund.netWorth) return;
         const container = document.getElementById('netWorthTable');
