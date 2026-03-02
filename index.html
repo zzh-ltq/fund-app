@@ -497,7 +497,6 @@
         .delete-btn { background: white; border: 1px solid #e9ecf5; width: 30px; height: 30px; border-radius: 50%; font-size: 16px; color: #8f9fc0; cursor: pointer; display: flex; align-items: center; justify-content: center; flex-shrink: 0; }
         .delete-btn:hover { background: #fef2f2; border-color: #fecdd3; color: #ef4444; }
         
-        /* 最新信息区域 - 增加净值与涨跌幅间距 */
         .latest-info { 
             display: flex; 
             justify-content: space-between; 
@@ -509,249 +508,88 @@
             margin-bottom: 12px; 
             gap: 8px;
         }
-        .latest-info .date {
-            color: #4b587c;
-            font-weight: 500;
-            white-space: nowrap;
-        }
-        .latest-info .value {
-            font-weight: 600;
-            color: #0b1b32;
-        }
-        .latest-info .change {
-            font-weight: 600;
-            margin-left: 8px;
-        }
+        .latest-info .date { color: #4b587c; font-weight: 500; white-space: nowrap; }
+        .latest-info .value { font-weight: 600; color: #0b1b32; }
+        .latest-info .change { font-weight: 600; margin-left: 8px; }
         .latest-info .change.positive { color: #ef4444; }
         .latest-info .change.negative { color: #16a34a; }
 
-        /* 多周期涨跌网格 */
         .rates-grid { 
-            display: flex; 
-            flex-wrap: wrap; 
-            gap: 8px 4px; 
+            display: flex; flex-wrap: wrap; gap: 8px 4px; 
             background: linear-gradient(135deg, #f8faff 0%, #eff6ff 100%);
-            padding: 12px 10px; 
-            border-radius: 20px; 
-            margin-bottom: 10px;
+            padding: 12px 10px; border-radius: 20px; margin-bottom: 10px;
         }
-        .rate-item { 
-            flex: 1 0 auto; 
-            min-width: 48px;
-            text-align: center; 
-        }
-        .rate-label { 
-            font-size: 0.6rem; 
-            color: #5c6b93; 
-            margin-bottom: 2px; 
-            display: block;
-        }
-        .rate-value { 
-            font-size: 0.85rem; 
-            font-weight: 600; 
-            line-height: 1.3;
-        }
+        .rate-item { flex: 1 0 auto; min-width: 48px; text-align: center; }
+        .rate-label { font-size: 0.6rem; color: #5c6b93; margin-bottom: 2px; display: block; }
+        .rate-value { font-size: 0.85rem; font-weight: 600; line-height: 1.3; }
         .positive { color: #ef4444; }
         .negative { color: #16a34a; }
 
-        .tag-group {
-            display: flex;
-            flex-wrap: wrap;
-            gap: 4px;
-            margin-top: 6px;
-        }
+        .tag-group { display: flex; flex-wrap: wrap; gap: 4px; margin-top: 6px; }
         .risk-tag { font-size: 0.7rem; background: linear-gradient(135deg, #f97316 0%, #ea580c 100%); color: white; padding: 3px 10px; border-radius: 20px; }
         .daily-risk-tag { background: linear-gradient(135deg, #2e7d5e 0%, #16a34a 100%); color: white; padding: 3px 10px; border-radius: 20px; }
         .maxdrop-tag { background: linear-gradient(135deg, #6366f1 0%, #4f46e5 100%); color: white; padding: 3px 10px; border-radius: 20px; }
 
         .move-controls { 
-            display: flex; 
-            align-items: center; 
-            gap: 6px; 
-            margin-top: 12px; 
-            padding-top: 10px; 
-            border-top: 1px dashed #dbe1ef; 
-            font-size: 0.7rem;
+            display: flex; align-items: center; gap: 6px; margin-top: 12px; padding-top: 10px; 
+            border-top: 1px dashed #dbe1ef; font-size: 0.7rem;
         }
         .move-select { 
-            flex: 1; 
-            padding: 6px 8px; 
-            border-radius: 20px; 
-            border: 1px solid #dbe1ef; 
-            background: white;
-            font-size: 0.7rem;
-            -webkit-appearance: none; appearance: none;
+            flex: 1; padding: 6px 8px; border-radius: 20px; border: 1px solid #dbe1ef; background: white;
+            font-size: 0.7rem; -webkit-appearance: none; appearance: none;
             background-image: url("data:image/svg+xml;charset=utf-8,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 24 24' fill='none' stroke='%232d3a5e' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M6 9l6 6 6-6'/%3E%3C/svg%3E");
             background-repeat: no-repeat; background-position: right 8px center; background-size: 12px; padding-right: 24px;
         }
         .move-btn { 
-            background: linear-gradient(135deg, #eef2f6 0%, #dbeafe 100%); 
-            border: none; 
-            border-radius: 20px; 
-            padding: 6px 12px; 
-            font-size: 0.7rem; 
-            cursor: pointer; 
-            color: #2d3a5e; 
-            font-weight: 500; 
+            background: linear-gradient(135deg, #eef2f6 0%, #dbeafe 100%); border: none; border-radius: 20px; 
+            padding: 6px 12px; font-size: 0.7rem; cursor: pointer; color: #2d3a5e; font-weight: 500; 
         }
         .move-btn:hover { background: linear-gradient(135deg, #dbeafe 0%, #bfdbfe 100%); color: #1d4ed8; }
 
         /* 模态框美化 + 简况区域 */
         .modal { 
-            display: none; 
-            position: fixed; 
-            top:0; left:0; width:100%; height:100%; 
-            background:rgba(0,0,0,0.5); 
-            align-items:center; justify-content:center; 
-            z-index:1000; 
-            backdrop-filter: blur(8px);
+            display: none; position: fixed; top:0; left:0; width:100%; height:100%; 
+            background:rgba(0,0,0,0.5); align-items:center; justify-content:center; 
+            z-index:1000; backdrop-filter: blur(8px);
         }
         .modal.active { display: flex; }
         .modal-content { 
-            background: white; 
-            border-radius: 36px; 
-            padding: 28px 24px; 
-            max-width:900px; 
-            width:95%; 
-            max-height:85vh; 
-            overflow-y:auto; 
-            box-shadow: 0 25px 50px rgba(0,0,0,0.15);
+            background: white; border-radius: 36px; padding: 28px 24px; max-width:900px; 
+            width:95%; max-height:85vh; overflow-y:auto; box-shadow: 0 25px 50px rgba(0,0,0,0.15);
             border: 1px solid rgba(255,255,255,0.2);
         }
-        .modal-header { 
-            display: flex; 
-            justify-content: space-between; 
-            align-items: center; 
-            margin-bottom: 24px; 
-        }
-        .modal-header h3 { 
-            margin:0; 
-            font-size:1.2rem; 
-            color:#0b1b32; 
-            font-weight:600; 
-        }
+        .modal-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 24px; }
+        .modal-header h3 { margin:0; font-size:1.2rem; color:#0b1b32; font-weight:600; }
         .close-modal { 
-            background: #f0f2f8; 
-            border: none; 
-            width: 36px; 
-            height: 36px; 
-            border-radius: 50%; 
-            font-size: 20px; 
-            cursor: pointer; 
-            color: #4b587c;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            transition: all 0.2s;
+            background: #f0f2f8; border: none; width: 36px; height: 36px; border-radius: 50%; 
+            font-size: 20px; cursor: pointer; color: #4b587c; display: flex; align-items: center; justify-content: center; transition: all 0.2s;
         }
         .close-modal:hover { background: #fee2e2; color: #ef4444; }
         .period-selector { 
-            display: flex; 
-            gap: 8px; 
-            margin: 0 0 20px; 
-            flex-wrap: wrap;
-            border-bottom: 1px solid #e9ecf5;
-            padding-bottom: 12px;
+            display: flex; gap: 8px; margin: 0 0 20px; flex-wrap: wrap;
+            border-bottom: 1px solid #e9ecf5; padding-bottom: 12px;
         }
         .period-btn { 
-            background: #f0f2f8; 
-            border: none; 
-            padding: 8px 20px; 
-            border-radius: 40px; 
-            cursor: pointer;
-            font-size: 0.85rem;
-            font-weight: 500;
-            color: #2d3a5e;
-            transition: all 0.2s;
+            background: #f0f2f8; border: none; padding: 8px 20px; border-radius: 40px; 
+            cursor: pointer; font-size: 0.85rem; font-weight: 500; color: #2d3a5e; transition: all 0.2s;
         }
-        .period-btn.active { 
-            background: #0b1b32; 
-            color: white; 
-            box-shadow: 0 4px 8px rgba(0,0,0,0.1);
-        }
-        .chart-container { 
-            width: 100%; 
-            height: 280px; 
-            margin-bottom: 24px; 
-            background: #fafbff;
-            border-radius: 24px;
-            padding: 16px;
-        }
-        .table-container { 
-            max-height: 300px; 
-            overflow-y: auto; 
-            border-radius: 20px; 
-            background: white;
-            border: 1px solid #e9ecf5;
-        }
-        .fund-info-panel {
-            background: #fafbff;
-            border-radius: 24px;
-            padding: 20px;
-            margin-top: 16px;
-        }
-        .info-section {
-            margin-bottom: 20px;
-        }
-        .info-section h4 {
-            margin: 0 0 10px 0;
-            color: #0b1b32;
-            font-size: 1rem;
-        }
-        .info-grid {
-            display: grid;
-            grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
-            gap: 12px;
-        }
-        .info-item {
-            background: white;
-            border-radius: 16px;
-            padding: 12px;
-            box-shadow: 0 2px 8px rgba(0,0,0,0.02);
-        }
-        .info-label {
-            font-size: 0.7rem;
-            color: #5c6b93;
-            margin-bottom: 4px;
-        }
-        .info-value {
-            font-weight: 600;
-            color: #0b1b32;
-        }
-        .stock-table {
-            width: 100%;
-            border-collapse: collapse;
-            font-size: 0.75rem;
-        }
-        .stock-table th {
-            background: #eef2f9;
-            padding: 8px;
-            text-align: left;
-        }
-        .stock-table td {
-            padding: 6px 8px;
-            border-bottom: 1px solid #e9ecf5;
-        }
-        table { 
-            width: 100%; 
-            border-collapse: collapse; 
-            font-size: 0.8rem; 
-        }
-        th { 
-            background: #f0f2f8;
-            position: sticky; 
-            top: 0; 
-            padding: 12px 8px; 
-            text-align: center; 
-            color: #2d3a5e;
-            font-weight: 600;
-        }
-        td { 
-            padding: 10px 6px; 
-            border-bottom: 1px solid #e9ecf5; 
-            text-align: center; 
-            color: #0b1b32;
-        }
+        .period-btn.active { background: #0b1b32; color: white; box-shadow: 0 4px 8px rgba(0,0,0,0.1); }
+        .chart-container { width: 100%; height: 280px; margin-bottom: 24px; background: #fafbff; border-radius: 24px; padding: 16px; }
+        .table-container { max-height: 300px; overflow-y: auto; border-radius: 20px; background: white; border: 1px solid #e9ecf5; }
+        .fund-info-panel { background: #fafbff; border-radius: 24px; padding: 20px; margin-top: 16px; }
+        .info-section { margin-bottom: 20px; }
+        .info-section h4 { margin: 0 0 10px 0; color: #0b1b32; font-size: 1rem; }
+        .info-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(200px, 1fr)); gap: 12px; }
+        .info-item { background: white; border-radius: 16px; padding: 12px; box-shadow: 0 2px 8px rgba(0,0,0,0.02); }
+        .info-label { font-size: 0.7rem; color: #5c6b93; margin-bottom: 4px; }
+        .info-value { font-weight: 600; color: #0b1b32; }
+        .stock-table { width: 100%; border-collapse: collapse; font-size: 0.75rem; }
+        .stock-table th { background: #eef2f9; padding: 8px; text-align: left; }
+        .stock-table td { padding: 8px 8px; border-bottom: 1px solid #e9ecf5; font-size: 0.8rem; }
+        
+        table { width: 100%; border-collapse: collapse; font-size: 0.8rem; }
+        th { background: #f0f2f8; position: sticky; top: 0; padding: 12px 8px; text-align: center; color: #2d3a5e; font-weight: 600; }
+        td { padding: 10px 6px; border-bottom: 1px solid #e9ecf5; text-align: center; color: #0b1b32; }
         tr:last-child td { border-bottom: none; }
         tr:hover td { background: #f8faff; }
         td.positive { color: #ef4444; font-weight: 500; }
@@ -768,8 +606,8 @@
 <body>
 <div class="container">
     <div class="header">
-        <h1>📈 基金分组看板 <span>板块优化+简况修复</span></h1>
-        <div class="sub">基金名称完整显示 · 15日最大累计跌幅 · 支持名称搜索</div>
+        <h1>📈 基金分组看板 <span>持仓明细无缝加载</span></h1>
+        <div class="sub">全面修复持仓明细获取 · 板块精细优化 · 支持代码名称搜索</div>
         
         <div class="group-tabs-wrapper">
             <div class="group-tabs" id="groupTabs"></div>
@@ -791,7 +629,6 @@
             </div>
         </div>
 
-        <!-- 添加区域 -->
         <div class="add-area">
             <div class="search-wrapper">
                 <div class="input-wrapper">
@@ -804,7 +641,6 @@
         </div>
     </div>
 
-    <!-- 左右布局主区域 -->
     <div class="main-dashboard">
         <div class="left-panel">
             <div id="cardContainer" class="card-grid"></div>
@@ -817,9 +653,7 @@
                     <span data-dir="asc">升序</span>
                 </div>
             </h3>
-            <div class="group-summary-list" id="groupSummaryList">
-                <!-- 动态渲染分组平均值 + 风险标记 -->
-            </div>
+            <div class="group-summary-list" id="groupSummaryList"></div>
         </div>
     </div>
 
@@ -828,7 +662,7 @@
         <span class="sync-status" id="syncStatus"></span>
     </div>
     <div class="footer-note">
-        ✨ 点击卡片查看曲线 · 右侧板块同步风险标记
+        ✨ 点击卡片查看曲线及股票持仓明细 · 右侧板块同步风险标记
     </div>
 </div>
 
@@ -844,21 +678,15 @@
             <button class="period-btn" data-days="30">30日</button>
             <button class="period-btn" data-days="60">60日</button>
             <button class="period-btn" data-days="90">90日</button>
-            <button class="period-btn" id="fundInfoBtn">📋 简况</button>
+            <button class="period-btn" id="fundInfoBtn">📋 简况与持仓</button>
         </div>
-        <!-- 曲线和表格区域 (默认显示) -->
         <div id="chartTableArea">
-            <div class="chart-container">
-                <canvas id="fundChart"></canvas>
-            </div>
+            <div class="chart-container"><canvas id="fundChart"></canvas></div>
             <div style="margin-top: 20px; font-weight: 500; color: #2d3a5e;" id="tableTitle">最近15日净值明细</div>
             <div class="table-container" id="netWorthTable"></div>
         </div>
-        <!-- 简况区域 (初始隐藏) -->
         <div id="fundInfoArea" style="display: none;">
-            <div class="fund-info-panel" id="fundInfoContent">
-                <!-- 动态填充基金经理、持仓等 -->
-            </div>
+            <div class="fund-info-panel" id="fundInfoContent"></div>
         </div>
     </div>
 </div>
@@ -882,29 +710,20 @@
 
     let s3 = null;
     try {
-        s3 = new AWS.S3({
-            endpoint: R2_CONFIG.endpoint,
-            accessKeyId: R2_CONFIG.accessKeyId,
-            secretAccessKey: R2_CONFIG.secretAccessKey,
-            s3ForcePathStyle: true,
-            signatureVersion: 'v4',
-            region: 'auto'
-        });
+        s3 = new AWS.S3({ endpoint: R2_CONFIG.endpoint, accessKeyId: R2_CONFIG.accessKeyId, secretAccessKey: R2_CONFIG.secretAccessKey, s3ForcePathStyle: true, signatureVersion: 'v4', region: 'auto' });
     } catch (e) { console.warn('S3 init failed', e); }
 
     let appData = { groups: [], fundsCache: {} };
     let currentGroupId = 'default';
     let chartInstance = null;
     let currentModalFund = null;
-
     let sortDirection = 'desc';
     let sortRule = 'daily';
     let viewMode = 'card';               
     let groupSummarySortDir = 'desc';    
-
     const UTC_OFFSET = 28800000;
 
-    // ---------- 基金全量列表 (script加载) ----------
+    // ---------- 基金全量列表 ----------
     let masterFundList = [];
     let masterListLoaded = false;
     let masterListLoading = null;
@@ -925,21 +744,12 @@
             const script = document.createElement('script');
             script.src = `https://fund.eastmoney.com/js/fundcode_search.js?t=${Date.now()}`;
             script.charset = 'utf-8';
-            const timeout = setTimeout(() => {
-                script.remove();
-                reject(new Error('加载基金列表超时'));
-                masterListLoading = null;
-            }, 15000);
+            const timeout = setTimeout(() => { script.remove(); reject(new Error('超时')); masterListLoading = null; }, 15000);
             script.onload = () => {
                 clearTimeout(timeout);
                 if (window.r && Array.isArray(window.r)) {
                     try {
-                        masterFundList = window.r.map(item => ({
-                            code: item[0],
-                            short: item[1],
-                            name: item[2],
-                            type: item[3]
-                        }));
+                        masterFundList = window.r.map(item => ({ code: item[0], short: item[1], name: item[2], type: item[3] }));
                         localStorage.setItem('fund_master_list', JSON.stringify(masterFundList));
                         localStorage.setItem('fund_master_list_time', Date.now().toString());
                         masterListLoaded = true;
@@ -947,23 +757,12 @@
                         script.remove();
                         resolve(masterFundList);
                     } catch (e) { reject(e); }
-                } else {
-                    reject(new Error('window.r 不存在'));
-                }
+                } else { reject(new Error('window.r 不存在')); }
                 masterListLoading = null;
             };
-            script.onerror = () => {
-                clearTimeout(timeout);
-                reject(new Error('加载基金列表网络错误'));
-                script.remove();
-                masterListLoading = null;
-            };
+            script.onerror = () => { clearTimeout(timeout); reject(new Error('网络错误')); script.remove(); masterListLoading = null; };
             document.head.appendChild(script);
-        }).catch(err => {
-            console.warn('加载基金列表失败', err);
-            masterFundList = [];
-            return [];
-        });
+        }).catch(err => { masterFundList = []; return []; });
         return masterListLoading;
     }
 
@@ -981,9 +780,7 @@
     }
     function getAllFundCodes() {
         const allCodes = [];
-        appData.groups.forEach(group => {
-            if (group.id !== 'default') allCodes.push(...group.fundCodes);
-        });
+        appData.groups.forEach(group => { if (group.id !== 'default') allCodes.push(...group.fundCodes); });
         return [...new Set(allCodes)];
     }
     function formatDate(dateInput) {
@@ -991,11 +788,8 @@
         if (typeof dateInput === 'string' && /^\d{4}-\d{2}-\d{2}$/.test(dateInput)) return dateInput;
         let ts = Number(dateInput);
         if (!isNaN(ts) && ts > 0) {
-            const beijing = ts + UTC_OFFSET;
-            const d = new Date(beijing);
-            if (!isNaN(d.getTime())) {
-                return `${d.getUTCFullYear()}-${String(d.getUTCMonth()+1).padStart(2,'0')}-${String(d.getUTCDate()).padStart(2,'0')}`;
-            }
+            const d = new Date(ts + UTC_OFFSET);
+            if (!isNaN(d.getTime())) return `${d.getUTCFullYear()}-${String(d.getUTCMonth()+1).padStart(2,'0')}-${String(d.getUTCDate()).padStart(2,'0')}`;
         }
         const d = new Date(dateInput);
         return `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`;
@@ -1033,14 +827,8 @@
             const fa = appData.fundsCache[a], fb = appData.fundsCache[b];
             if (!fa || !fa.netWorth) return 1;
             if (!fb || !fb.netWorth) return -1;
-            let va, vb;
-            if (sortRule === 'daily') {
-                va = parseFloat(getLatestInfo(fa.netWorth).change) || 0;
-                vb = parseFloat(getLatestInfo(fb.netWorth).change) || 0;
-            } else {
-                va = parseFloat(computeRate(fa.netWorth, parseInt(sortRule))) || 0;
-                vb = parseFloat(computeRate(fb.netWorth, parseInt(sortRule))) || 0;
-            }
+            let va = sortRule === 'daily' ? parseFloat(getLatestInfo(fa.netWorth).change)||0 : parseFloat(computeRate(fa.netWorth, parseInt(sortRule)))||0;
+            let vb = sortRule === 'daily' ? parseFloat(getLatestInfo(fb.netWorth).change)||0 : parseFloat(computeRate(fb.netWorth, parseInt(sortRule)))||0;
             return sortDirection === 'asc' ? va - vb : vb - va;
         });
         return codes;
@@ -1050,7 +838,6 @@
     function detectSector(fundName) {
         if (!fundName) return null;
         const nameUpper = fundName.toUpperCase();
-        
         const sectorMap = [
             { name: '宽基指数', keywords: ['沪深300', '上证50', '中证500', '中证1000', '中证2000', '创业板', '科创板', '科创50', '纳斯达克', '纳指', '标普', '深证', '宽基', '恒生'] },
             { name: '医疗/生物', keywords: ['医疗', '医药', '健康', '生物', '中药', '药'] },
@@ -1068,20 +855,14 @@
             { name: '债券/固收', keywords: ['债', '固收', '理财'] },
             { name: '量化/策略', keywords: ['量化', '策略', '精选', '优选', '成长', '优势', '回报', '趋势', '混合', '灵活配置', '先锋', '动力'] }
         ];
-
         for (let sector of sectorMap) {
             for (let kw of sector.keywords) {
-                if (nameUpper.includes(kw.toUpperCase())) {
-                    return sector.name;
-                }
+                if (nameUpper.includes(kw.toUpperCase())) return sector.name;
             }
         }
-        
-        // 兜底推算
         if (nameUpper.includes('股票')) return '股票型';
         if (nameUpper.includes('指数')) return '指数型';
         if (nameUpper.includes('ETF')) return 'ETF';
-
         return '其他';
     }
 
@@ -1096,18 +877,12 @@
                     const defaultGroup = appData.groups.find(g => g.id === 'default');
                     if (defaultGroup && defaultGroup.name === '默认') defaultGroup.name = '全部';
                 } else {
-                    const oldCodes = Array.isArray(parsed) ? parsed : [];
-                    appData = { groups: [{ id:'default', name:'全部', fundCodes:[] }], fundsCache:{} };
-                    if (oldCodes.length > 0) {
-                        appData.groups.push({ id:'group_'+Date.now(), name:'我的基金', fundCodes:oldCodes });
-                    }
+                    appData = { groups: [{ id:'default', name:'全部', fundCodes:[] }, { id:'group_'+Date.now(), name:'我的基金', fundCodes:Array.isArray(parsed)?parsed:[] }], fundsCache:{} };
                 }
             } else {
                 appData = { groups: [{ id:'default', name:'全部', fundCodes:[] }], fundsCache:{} };
             }
-        } catch (e) {
-            appData = { groups: [{ id:'default', name:'全部', fundCodes:[] }], fundsCache:{} };
-        }
+        } catch (e) { appData = { groups: [{ id:'default', name:'全部', fundCodes:[] }], fundsCache:{} }; }
         if (!appData.fundsCache) appData.fundsCache = {};
         const defaultGroup = appData.groups.find(g => g.id === 'default');
         if (defaultGroup) defaultGroup.fundCodes = getAllFundCodes();
@@ -1116,47 +891,33 @@
         const defaultGroup = appData.groups.find(g => g.id === 'default');
         if (defaultGroup) defaultGroup.fundCodes = getAllFundCodes();
         localStorage.setItem(STORAGE_KEY, JSON.stringify(appData));
-        if (s3) saveToCloud(appData).catch(err => console.warn('cloud sync failed', err));
+        if (s3) saveToCloud(appData).catch(err => console.warn('cloud sync failed'));
     }
     async function loadFromCloud() {
         if (!s3) throw new Error('S3未初始化');
-        const params = { Bucket: R2_CONFIG.bucketName, Key: 'funds_app_data_v3.json' };
         try {
-            const data = await s3.getObject(params).promise();
+            const data = await s3.getObject({ Bucket: R2_CONFIG.bucketName, Key: 'funds_app_data_v3.json' }).promise();
             return JSON.parse(data.Body.toString('utf-8'));
-        } catch (e) {
-            if (e.code === 'NoSuchKey') return null;
-            throw e;
-        }
+        } catch (e) { if (e.code === 'NoSuchKey') return null; throw e; }
     }
     async function saveToCloud(data) {
         if (!s3) return;
-        await s3.putObject({
-            Bucket: R2_CONFIG.bucketName,
-            Key: 'funds_app_data_v3.json',
-            Body: JSON.stringify(data),
-            ContentType: 'application/json'
-        }).promise();
+        await s3.putObject({ Bucket: R2_CONFIG.bucketName, Key: 'funds_app_data_v3.json', Body: JSON.stringify(data), ContentType: 'application/json' }).promise();
     }
 
     // ========== 分组平均值及风险标记计算 ==========
     function calculateGroupAvgChange(groupId) {
         const group = appData.groups.find(g => g.id === groupId);
         if (!group || group.id === 'default') return null;
-        const codes = group.fundCodes;
         let sum = 0, count = 0;
-        codes.forEach(code => {
+        group.fundCodes.forEach(code => {
             const fund = appData.fundsCache[code];
             if (fund && fund.netWorth) {
                 const change = getLatestInfo(fund.netWorth).change;
-                if (change !== null) {
-                    sum += parseFloat(change);
-                    count++;
-                }
+                if (change !== null) { sum += parseFloat(change); count++; }
             }
         });
-        if (count === 0) return null;
-        return (sum / count).toFixed(2);
+        return count === 0 ? null : (sum / count).toFixed(2);
     }
     function has15DayRisk(groupId) {
         const group = appData.groups.find(g => g.id === groupId);
@@ -1179,489 +940,328 @@
         });
     }
 
-    // ========== 渲染右侧分组板块 ==========
     function renderGroupSummaryPanel() {
         const listEl = document.getElementById('groupSummaryList');
         if (!listEl) return;
         const groups = appData.groups.filter(g => g.id !== 'default');
-        const items = groups.map(g => {
-            const avg = calculateGroupAvgChange(g.id);
-            const has15 = has15DayRisk(g.id);
-            const hasDaily = hasDailyRisk(g.id);
-            return { id: g.id, name: g.name, avg, has15, hasDaily };
-        }).filter(item => item.avg !== null);
-        items.sort((a,b) => {
-            const va = parseFloat(a.avg) || 0;
-            const vb = parseFloat(b.avg) || 0;
-            return groupSummarySortDir === 'desc' ? vb - va : va - vb;
-        });
-        let html = '';
+        const items = groups.map(g => ({ id: g.id, name: g.name, avg: calculateGroupAvgChange(g.id), has15: has15DayRisk(g.id), hasDaily: hasDailyRisk(g.id) })).filter(item => item.avg !== null);
+        items.sort((a,b) => groupSummarySortDir === 'desc' ? (parseFloat(b.avg)||0) - (parseFloat(a.avg)||0) : (parseFloat(a.avg)||0) - (parseFloat(b.avg)||0));
+        let html = items.length === 0 ? `<div style="padding:16px;text-align:center;color:#9aa9c2;">暂无分组数据</div>` : '';
         items.forEach(item => {
-            const activeClass = item.id === currentGroupId ? 'active' : '';
-            const valueClass = parseFloat(item.avg) >= 0 ? 'positive' : 'negative';
-            let badgeHtml = '';
-            if (item.has15) badgeHtml += '<span class="warning-badge">!</span>';
-            if (item.hasDaily) badgeHtml += '<span class="green-heart">💚</span>';
-            if (badgeHtml) {
-                badgeHtml = `<span class="group-summary-badge">${badgeHtml}</span>`;
-            }
-            html += `
-                <div class="group-summary-item ${activeClass}" data-group-id="${item.id}">
-                    <span class="group-summary-name">
-                        ${item.name}
-                        ${badgeHtml}
-                    </span>
-                    <span class="group-summary-value ${valueClass}">${item.avg}%</span>
-                </div>
-            `;
+            let badgeHtml = (item.has15 ? '<span class="warning-badge">!</span>' : '') + (item.hasDaily ? '<span class="green-heart">💚</span>' : '');
+            if (badgeHtml) badgeHtml = `<span class="group-summary-badge">${badgeHtml}</span>`;
+            html += `<div class="group-summary-item ${item.id === currentGroupId ? 'active' : ''}" data-group-id="${item.id}"><span class="group-summary-name">${item.name} ${badgeHtml}</span><span class="group-summary-value ${parseFloat(item.avg) >= 0 ? 'positive' : 'negative'}">${item.avg}%</span></div>`;
         });
-        if (items.length === 0) {
-            html = `<div style="padding:16px;text-align:center;color:#9aa9c2;">暂无分组数据</div>`;
-        }
         listEl.innerHTML = html;
-        listEl.querySelectorAll('.group-summary-item').forEach(el => {
-            el.addEventListener('click', () => {
-                const gid = el.dataset.groupId;
-                if (gid) {
-                    currentGroupId = gid;
-                    renderGroups();
-                    renderCards();
-                    renderGroupSummaryPanel();
-                }
-            });
-        });
+        listEl.querySelectorAll('.group-summary-item').forEach(el => el.addEventListener('click', () => { currentGroupId = el.dataset.groupId; renderGroups(); renderCards(); renderGroupSummaryPanel(); }));
     }
 
-    // ========== 分组渲染（顶部标签）==========
     function renderGroups() {
         const tabsContainer = document.getElementById('groupTabs');
         const groupSelect = document.getElementById('groupSelect');
-        if (!tabsContainer) return;
         let tabsHtml = '', optionsHtml = '';
         const nonDefaultGroups = [];
         appData.groups.forEach(group => {
             const isDefault = group.id === 'default';
-            const has15 = isDefault ? false : has15DayRisk(group.id);
-            const hasDaily = isDefault ? false : hasDailyRisk(group.id);
-            const fundCount = group.fundCodes.length;
-            const activeClass = group.id === currentGroupId ? 'active' : '';
-            const warningBadge = has15 ? '<span class="warning-badge">!</span>' : '';
-            const greenHeart = hasDaily ? '<span class="green-heart">💚</span>' : '';
-            const countSpan = `<span class="fund-count">${fundCount}</span>`;
-            const deleteBtn = isDefault ? '' : `<button class="delete-group" data-group-id="${group.id}">✕</button>`;
-            tabsHtml += `<div class="group-tab ${activeClass}" data-group-id="${group.id}">${group.name} ${countSpan} ${warningBadge} ${greenHeart} ${deleteBtn}</div>`;
-            if (!isDefault) {
-                nonDefaultGroups.push(group);
-                optionsHtml += `<option value="${group.id}">${group.name}</option>`;
-            }
+            const badge15 = !isDefault && has15DayRisk(group.id) ? '<span class="warning-badge">!</span>' : '';
+            const badgeDaily = !isDefault && hasDailyRisk(group.id) ? '<span class="green-heart">💚</span>' : '';
+            const delBtn = isDefault ? '' : `<button class="delete-group" data-group-id="${group.id}">✕</button>`;
+            tabsHtml += `<div class="group-tab ${group.id === currentGroupId ? 'active' : ''}" data-group-id="${group.id}">${group.name} <span class="fund-count">${group.fundCodes.length}</span> ${badge15} ${badgeDaily} ${delBtn}</div>`;
+            if (!isDefault) { nonDefaultGroups.push(group); optionsHtml += `<option value="${group.id}">${group.name}</option>`; }
         });
-        tabsHtml += `<button class="add-group-btn" id="addGroupBtn">+</button>`;
-        tabsContainer.innerHTML = tabsHtml;
+        tabsContainer.innerHTML = tabsHtml + `<button class="add-group-btn" id="addGroupBtn">+</button>`;
         if (groupSelect) {
             groupSelect.innerHTML = optionsHtml;
-            if (currentGroupId !== 'default' && nonDefaultGroups.some(g => g.id === currentGroupId)) {
-                groupSelect.value = currentGroupId;
-            } else if (nonDefaultGroups.length > 0) {
-                groupSelect.value = nonDefaultGroups[0].id;
-            }
+            if (currentGroupId !== 'default' && nonDefaultGroups.some(g => g.id === currentGroupId)) groupSelect.value = currentGroupId;
+            else if (nonDefaultGroups.length > 0) groupSelect.value = nonDefaultGroups[0].id;
         }
-
         document.querySelectorAll('.group-tab[data-group-id]').forEach(el => {
-            el.addEventListener('click', (e) => {
-                if (e.target.classList.contains('delete-group')) return;
-                const gid = el.getAttribute('data-group-id');
-                if (gid) { 
-                    currentGroupId = gid; 
-                    renderGroups(); 
-                    renderCards(); 
-                    renderGroupSummaryPanel();
-                }
-            });
+            el.addEventListener('click', (e) => { if (!e.target.classList.contains('delete-group')) { currentGroupId = el.getAttribute('data-group-id'); renderGroups(); renderCards(); renderGroupSummaryPanel(); } });
         });
-        document.querySelectorAll('.delete-group').forEach(btn => {
-            btn.addEventListener('click', (e) => {
-                e.stopPropagation();
-                const gid = btn.getAttribute('data-group-id');
-                if (gid && gid !== 'default') {
-                    if (confirm(`确定删除该分组吗？组内基金将被一并移除`)) {
-                        appData.groups = appData.groups.filter(g => g.id !== gid);
-                        if (currentGroupId === gid) currentGroupId = 'default';
-                        saveAppData(); 
-                        renderGroups(); 
-                        renderCards();
-                        renderGroupSummaryPanel();
-                        showToast('分组已删除');
-                    }
-                }
-            });
-        });
+        document.querySelectorAll('.delete-group').forEach(btn => btn.addEventListener('click', (e) => {
+            e.stopPropagation(); const gid = btn.getAttribute('data-group-id');
+            if (gid && gid !== 'default' && confirm(`确定删除该分组吗？组内基金将被一并移除`)) {
+                appData.groups = appData.groups.filter(g => g.id !== gid);
+                if (currentGroupId === gid) currentGroupId = 'default';
+                saveAppData(); renderGroups(); renderCards(); renderGroupSummaryPanel(); showToast('分组已删除');
+            }
+        }));
         document.getElementById('addGroupBtn')?.addEventListener('click', () => {
             const newName = prompt('新分组名称', '新分组');
             if (newName?.trim()) {
-                const isNameExists = appData.groups.some(g => g.name.trim() === newName.trim());
-                if (isNameExists) { showToast('分组名称已存在'); return; }
-                const newId = 'group_' + Date.now() + '_' + Math.random().toString(36).substr(2,6);
-                appData.groups.push({ id: newId, name: newName.trim(), fundCodes: [] });
-                saveAppData(); 
-                renderGroups();
-                renderGroupSummaryPanel();
-                showToast('分组创建成功');
+                if (appData.groups.some(g => g.name.trim() === newName.trim())) { showToast('分组名称已存在'); return; }
+                appData.groups.push({ id: 'group_' + Date.now() + '_' + Math.random().toString(36).substr(2,6), name: newName.trim(), fundCodes: [] });
+                saveAppData(); renderGroups(); renderGroupSummaryPanel(); showToast('分组创建成功');
             }
         });
     }
 
-    // ========== 基金卡片/列表渲染 ==========
     function renderCards() {
         const container = document.getElementById('cardContainer');
         if (!container) return;
-        let currentFundCodes = [];
         const currentGroup = appData.groups.find(g => g.id === currentGroupId);
-        if (currentGroup) {
-            currentFundCodes = currentGroupId === 'default' ? getAllFundCodes() : [...currentGroup.fundCodes];
-        }
-        currentFundCodes = sortFundCodes(currentFundCodes);
-        if (currentFundCodes.length === 0) {
-            container.innerHTML = `<div class="empty-state"><div>📭</div><p>暂无基金数据</p></div>`;
-            return;
-        }
+        let currentFundCodes = sortFundCodes(currentGroup ? (currentGroupId === 'default' ? getAllFundCodes() : [...currentGroup.fundCodes]) : []);
+        if (currentFundCodes.length === 0) { container.innerHTML = `<div class="empty-state"><div>📭</div><p>暂无基金数据</p></div>`; return; }
 
-        if (viewMode === 'card') {
-            let cardsHtml = '';
-            currentFundCodes.forEach(code => {
-                const fund = appData.fundsCache[code];
-                if (fund && !fund.error && fund.netWorth) {
-                    const latestInfo = getLatestInfo(fund.netWorth);
-                    const change15DOverall = compute15DayChange(fund.netWorth, MAX_DROP_PERIOD);
-                    const maxDropIn15 = computeMaxDropInPeriod(fund.netWorth, MAX_DROP_PERIOD);
-                    const isRisk = change15DOverall !== null && parseFloat(change15DOverall) <= DROP_THRESHOLD;
-                    const isDailyRisk = latestInfo.change !== null && parseFloat(latestInfo.change) <= DAILY_RISK_THRESHOLD;
-                    let ratesHtml = '';
-                    PERIODS.forEach(period => {
-                        const rate = computeRate(fund.netWorth, period);
-                        const rateClass = rate !== null ? (parseFloat(rate) >= 0 ? 'positive' : 'negative') : '';
-                        ratesHtml += `<div class="rate-item"><span class="rate-label">${period}日</span><span class="rate-value ${rateClass}">${rate !== null ? rate+'%' : '--'}</span></div>`;
-                    });
-                    const changeClass = latestInfo.change !== null ? (parseFloat(latestInfo.change) >= 0 ? 'positive' : 'negative') : '';
-                    const riskTag = isRisk ? '<span class="risk-tag">15日跌幅大</span>' : '';
-                    const dailyRiskTag = isDailyRisk ? '<span class="daily-risk-tag">当日大跌</span>' : '';
-                    const maxDropTag = maxDropIn15 ? `<span class="maxdrop-tag">15日 ${maxDropIn15}%</span>` : '';
-                    
-                    // 板块标签显示处理
-                    const sector = detectSector(fund.name || '');
-                    const sectorTag = sector ? `<span class="sector-tag" ${sector === '其他' ? 'style="background:#f0f2f8;color:#5c6b93;"' : ''}>${sector}</span>` : '';
-                    
-                    cardsHtml += `
+        let html = '';
+        currentFundCodes.forEach(code => {
+            const fund = appData.fundsCache[code];
+            if (fund && !fund.error && fund.netWorth) {
+                const latestInfo = getLatestInfo(fund.netWorth);
+                const change15 = compute15DayChange(fund.netWorth, MAX_DROP_PERIOD);
+                const maxDrop = computeMaxDropInPeriod(fund.netWorth, MAX_DROP_PERIOD);
+                const isRisk = change15 !== null && parseFloat(change15) <= DROP_THRESHOLD;
+                const isDailyRisk = latestInfo.change !== null && parseFloat(latestInfo.change) <= DAILY_RISK_THRESHOLD;
+                const changeClass = latestInfo.change !== null ? (parseFloat(latestInfo.change) >= 0 ? 'positive' : 'negative') : '';
+                const sector = detectSector(fund.name || '');
+                const sectorTag = sector ? `<span class="sector-tag" ${sector==='其他'?'style="background:#f0f2f8;color:#5c6b93;"':''}>${sector}</span>` : '';
+                
+                if (viewMode === 'card') {
+                    let ratesHtml = PERIODS.map(p => {
+                        const rate = computeRate(fund.netWorth, p);
+                        return `<div class="rate-item"><span class="rate-label">${p}日</span><span class="rate-value ${rate!==null?(parseFloat(rate)>=0?'positive':'negative'):''}">${rate!==null?rate+'%':'--'}</span></div>`;
+                    }).join('');
+                    const tags = (maxDrop?`<span class="maxdrop-tag">15日 ${maxDrop}%</span>`:'') + (isRisk?'<span class="risk-tag">15日跌幅大</span>':'') + (isDailyRisk?'<span class="daily-risk-tag">当日大跌</span>':'');
+                    html += `
                         <div class="card ${isRisk ? 'risk-highlight' : ''}" data-code="${code}">
                             <div class="card-header">
                                 <div class="card-header-left">
                                     <div class="fund-title">${fund.name || code}</div>
-                                    <div class="fund-code-wrapper">
-                                        <span class="fund-code">${code}</span>
-                                        ${sectorTag}
-                                    </div>
+                                    <div class="fund-code-wrapper"><span class="fund-code">${code}</span>${sectorTag}</div>
                                 </div>
                                 <button class="delete-btn" data-code="${code}">✕</button>
                             </div>
-                            <div class="latest-info">
-                                <span class="date">${latestInfo.date}</span>
-                                <div>
-                                    <span class="value">${latestInfo.value}</span>
-                                    ${latestInfo.change !== null ? `<span class="change ${changeClass}">${latestInfo.change}%</span>` : ''}
-                                </div>
-                            </div>
+                            <div class="latest-info"><span class="date">${latestInfo.date}</span><div><span class="value">${latestInfo.value}</span>${latestInfo.change !== null ? `<span class="change ${changeClass}">${latestInfo.change}%</span>` : ''}</div></div>
                             <div class="rates-grid">${ratesHtml}</div>
-                            <div class="tag-group">${maxDropTag}${riskTag}${dailyRiskTag}</div>
+                            <div class="tag-group">${tags}</div>
                             <div class="move-controls">
                                 <select class="move-select" data-code="${code}">${appData.groups.filter(g => g.id !== 'default' && g.id !== currentGroupId).map(g => `<option value="${g.id}">${g.name}</option>`).join('')}</select>
                                 <button class="move-btn" data-code="${code}">移动</button>
                             </div>
-                        </div>
-                    `;
+                        </div>`;
                 } else {
-                    cardsHtml += `<div class="card" data-code="${code}"><div class="card-header"><div><div class="fund-title">加载失败</div><div class="fund-code">${code}</div></div><button class="delete-btn" data-code="${code}">✕</button></div><div style="padding:20px;color:#9aa9c2;">无法获取数据</div></div>`;
-                }
-            });
-            container.className = 'card-grid';
-            container.innerHTML = cardsHtml;
-        } else {
-            let listHtml = '';
-            currentFundCodes.forEach(code => {
-                const fund = appData.fundsCache[code];
-                if (fund && !fund.error && fund.netWorth) {
-                    const latestInfo = getLatestInfo(fund.netWorth);
-                    const changeClass = latestInfo.change !== null ? (parseFloat(latestInfo.change) >= 0 ? 'positive' : 'negative') : '';
-                    const rate3 = computeRate(fund.netWorth, 3);
-                    const rate5 = computeRate(fund.netWorth, 5);
-                    const rate15 = computeRate(fund.netWorth, 15);
-                    
-                    const sector = detectSector(fund.name || '');
-                    const sectorTag = sector ? `<span class="sector-tag" style="margin-left:4px; ${sector === '其他' ? 'background:#f0f2f8;color:#5c6b93;' : ''}">${sector}</span>` : '';
-                    
-                    listHtml += `
+                    const r3 = computeRate(fund.netWorth, 3), r5 = computeRate(fund.netWorth, 5), r15 = computeRate(fund.netWorth, 15);
+                    html += `
                         <div class="list-row" data-code="${code}">
-                            <div class="fund-main">
-                                <span class="fund-title">${fund.name || code}</span>
-                                <span class="fund-code">${code}</span>
-                                ${sectorTag}
-                            </div>
-                            <div class="latest-info">
-                                <span class="date">${latestInfo.date}</span>
-                                <span class="value">${latestInfo.value}</span>
-                                <span class="change ${changeClass}">${latestInfo.change !== null ? latestInfo.change+'%' : ''}</span>
-                            </div>
+                            <div class="fund-main"><span class="fund-title">${fund.name || code}</span><span class="fund-code">${code}</span><span class="sector-tag" style="margin-left:4px;${sector==='其他'?'background:#f0f2f8;color:#5c6b93;':''}">${sector}</span></div>
+                            <div class="latest-info"><span class="date">${latestInfo.date}</span><span class="value">${latestInfo.value}</span><span class="change ${changeClass}">${latestInfo.change !== null ? latestInfo.change+'%' : ''}</span></div>
                             <div class="rates-summary">
-                                <span class="rate-item ${rate3 && parseFloat(rate3)>=0?'positive':'negative'}">3日:${rate3||'--'}</span>
-                                <span class="rate-item ${rate5 && parseFloat(rate5)>=0?'positive':'negative'}">5日:${rate5||'--'}</span>
-                                <span class="rate-item ${rate15 && parseFloat(rate15)>=0?'positive':'negative'}">15日:${rate15||'--'}</span>
+                                <span class="rate-item ${r3&&parseFloat(r3)>=0?'positive':'negative'}">3日:${r3||'--'}</span>
+                                <span class="rate-item ${r5&&parseFloat(r5)>=0?'positive':'negative'}">5日:${r5||'--'}</span>
+                                <span class="rate-item ${r15&&parseFloat(r15)>=0?'positive':'negative'}">15日:${r15||'--'}</span>
                             </div>
                             <button class="delete-btn" data-code="${code}">✕</button>
-                        </div>
-                    `;
-                } else {
-                    listHtml += `<div class="list-row" data-code="${code}">加载失败 ${code}<button class="delete-btn" data-code="${code}">✕</button></div>`;
+                        </div>`;
                 }
-            });
-            container.className = 'list-view';
-            container.innerHTML = listHtml;
-        }
+            } else {
+                html += viewMode === 'card' ? `<div class="card" data-code="${code}"><div class="card-header"><div><div class="fund-title">加载失败</div><div class="fund-code">${code}</div></div><button class="delete-btn" data-code="${code}">✕</button></div><div style="padding:20px;color:#9aa9c2;">无法获取数据</div></div>` : `<div class="list-row" data-code="${code}">加载失败 ${code}<button class="delete-btn" data-code="${code}">✕</button></div>`;
+            }
+        });
+        container.className = viewMode === 'card' ? 'card-grid' : 'list-view';
+        container.innerHTML = html;
 
-        document.querySelectorAll('.delete-btn').forEach(btn => {
-            btn.addEventListener('click', async (e) => {
-                e.stopPropagation();
-                const code = btn.getAttribute('data-code');
-                if (confirm(`确定删除基金 ${code} 吗？`)) {
-                    appData.groups.forEach(group => {
-                        if (group.id !== 'default') group.fundCodes = group.fundCodes.filter(c => c !== code);
-                    });
-                    delete appData.fundsCache[code];
-                    saveAppData();
-                    renderGroups();
-                    renderCards();
-                    renderGroupSummaryPanel();
-                    showToast('基金已删除');
-                }
-            });
-        });
-        document.querySelectorAll('.move-btn').forEach(btn => {
-            btn.addEventListener('click', async (e) => {
-                const code = btn.getAttribute('data-code');
-                const select = btn.parentElement.querySelector('.move-select');
-                const targetGroupId = select.value;
-                if (!targetGroupId) { showToast('请选择目标分组'); return; }
-                if (checkFundDuplicate(targetGroupId, code)) { showToast('目标分组已存在'); return; }
-                appData.groups.forEach(group => {
-                    if (group.id !== 'default' && group.fundCodes.includes(code)) {
-                        group.fundCodes = group.fundCodes.filter(c => c !== code);
-                    }
-                });
-                const targetGroup = appData.groups.find(g => g.id === targetGroupId);
-                if (targetGroup) targetGroup.fundCodes.push(code);
-                saveAppData();
-                renderGroups();
-                renderCards();
-                renderGroupSummaryPanel();
-                showToast('基金已移动');
-            });
-        });
-        document.querySelectorAll('.card[data-code], .list-row[data-code]').forEach(el => {
-            el.addEventListener('click', (e) => {
-                if (e.target.classList.contains('delete-btn') || e.target.classList.contains('move-btn')) return;
-                const code = el.getAttribute('data-code');
-                const fund = appData.fundsCache[code];
-                if (fund && fund.netWorth) {
-                    currentModalFund = fund;
-                    openChartModal();
-                }
-            });
-        });
+        document.querySelectorAll('.delete-btn').forEach(btn => btn.addEventListener('click', (e) => {
+            e.stopPropagation(); const code = btn.getAttribute('data-code');
+            if (confirm(`确定删除基金 ${code} 吗？`)) {
+                appData.groups.forEach(g => { if (g.id !== 'default') g.fundCodes = g.fundCodes.filter(c => c !== code); });
+                delete appData.fundsCache[code]; saveAppData(); renderGroups(); renderCards(); renderGroupSummaryPanel(); showToast('已删除');
+            }
+        }));
+        document.querySelectorAll('.move-btn').forEach(btn => btn.addEventListener('click', (e) => {
+            const code = btn.getAttribute('data-code'), tgtId = btn.parentElement.querySelector('.move-select').value;
+            if (!tgtId) { showToast('请选择目标分组'); return; }
+            if (checkFundDuplicate(tgtId, code)) { showToast('目标分组已存在'); return; }
+            appData.groups.forEach(g => { if (g.id !== 'default') g.fundCodes = g.fundCodes.filter(c => c !== code); });
+            const tgt = appData.groups.find(g => g.id === tgtId);
+            if (tgt) tgt.fundCodes.push(code);
+            saveAppData(); renderGroups(); renderCards(); renderGroupSummaryPanel(); showToast('已移动');
+        }));
+        document.querySelectorAll('.card[data-code], .list-row[data-code]').forEach(el => el.addEventListener('click', (e) => {
+            if (e.target.classList.contains('delete-btn') || e.target.classList.contains('move-btn')) return;
+            const fund = appData.fundsCache[el.getAttribute('data-code')];
+            if (fund && fund.netWorth) { currentModalFund = fund; openChartModal(); }
+        }));
     }
 
-    // ========== 基金数据加载（修复概况解析） ==========
+    // ========== 基金基础数据获取（修复资产/经理结构解析） ==========
     async function loadFundData(code, forceRefresh = false) {
-        if (!forceRefresh && appData.fundsCache[code]?.netWorth) {
-            return appData.fundsCache[code];
-        }
+        if (!forceRefresh && appData.fundsCache[code]?.netWorth) return appData.fundsCache[code];
         return new Promise((resolve, reject) => {
             const GLOBAL_KEYS = ['Data_netWorthTrend','fund_name','fS_name','fund_manager','fund_asset','fund_stockportfolio','Data_fundManager','Data_assetAllocation','Data_stockPortfolio', 'Data_currentFundManager'];
             GLOBAL_KEYS.forEach(k => delete window[k]);
-            
             const script = document.createElement('script');
             script.src = `https://fund.eastmoney.com/pingzhongdata/${code}.js?t=${Date.now()}`;
             script.charset = 'utf-8';
-            
             const timeoutId = setTimeout(() => { script.remove(); reject(new Error('超时')); updateCardError(code); }, 10000);
-            
             script.onload = () => {
                 setTimeout(() => {
                     clearTimeout(timeoutId);
                     let netWorth = null;
                     if (window.Data_netWorthTrend && Array.isArray(window.Data_netWorthTrend)) {
-                        netWorth = window.Data_netWorthTrend.map(item => ({ x: item.x, y: item.y }));
-                        netWorth.sort((a,b) => new Date(a.x).getTime() - new Date(b.x).getTime());
-                        if (netWorth.length > MAX_HISTORY_POINTS) netWorth = netWorth.slice(-MAX_HISTORY_POINTS);
+                        netWorth = window.Data_netWorthTrend.map(item => ({ x: item.x, y: item.y })).sort((a,b) => new Date(a.x).getTime() - new Date(b.x).getTime()).slice(-MAX_HISTORY_POINTS);
                     }
-                    
                     const name = window.fund_name || window.fS_name || code;
-                    
-                    // 修复解析：获取现任基金经理
                     const manager = window.Data_currentFundManager || window.fund_manager || window.Data_fundManager || null;
                     
-                    // 修复解析：准确提取最新的资产配置
                     let asset = null;
                     if (window.Data_assetAllocation && Array.isArray(window.Data_assetAllocation.categories) && Array.isArray(window.Data_assetAllocation.series)) {
                         const dates = window.Data_assetAllocation.categories;
-                        const series = window.Data_assetAllocation.series;
                         if (dates.length > 0) {
-                            const lastIndex = dates.length - 1;
-                            const date = dates[lastIndex];
-                            let stock = '0.00', bond = '0.00', cash = '0.00';
-                            series.forEach(item => {
-                                if (item.name === '股票占净比') stock = item.data[lastIndex];
-                                if (item.name === '债券占净比') bond = item.data[lastIndex];
-                                if (item.name === '现金占净比') cash = item.data[lastIndex];
+                            const lastIdx = dates.length - 1;
+                            asset = { date: dates[lastIdx], stock: '0.00', bond: '0.00', cash: '0.00' };
+                            window.Data_assetAllocation.series.forEach(item => {
+                                if (item.name === '股票占净比') asset.stock = item.data[lastIdx];
+                                if (item.name === '债券占净比') asset.bond = item.data[lastIdx];
+                                if (item.name === '现金占净比') asset.cash = item.data[lastIdx];
                             });
-                            asset = { date, stock, bond, cash };
                         }
-                    } else {
-                        asset = window.fund_asset || window.Data_assetAllocation || null;
-                    }
+                    } else { asset = window.fund_asset || window.Data_assetAllocation || null; }
 
                     const stock = window.fund_stockportfolio || window.Data_stockPortfolio || null;
-                    
-                    GLOBAL_KEYS.forEach(k => delete window[k]);
-                    script.remove();
+                    GLOBAL_KEYS.forEach(k => delete window[k]); script.remove();
                     
                     if (netWorth && netWorth.length > 0) {
                         const fundInfo = { code, name, netWorth, error: false, manager, asset, stock };
+                        if (stock && Array.isArray(stock) && stock.length > 0) fundInfo.stockLoaded = true;
+                        else fundInfo.stockLoaded = false;
+                        
                         appData.fundsCache[code] = fundInfo;
-                        resolve(fundInfo);
-                        renderCards();
-                        renderGroupSummaryPanel();
-                    } else {
-                        reject(new Error('无净值'));
-                        updateCardError(code);
-                    }
+                        resolve(fundInfo); renderCards(); renderGroupSummaryPanel();
+                    } else { reject(new Error('无净值')); updateCardError(code); }
                 }, 60);
             };
-            script.onerror = () => {
-                clearTimeout(timeoutId);
-                GLOBAL_KEYS.forEach(k => delete window[k]);
+            script.onerror = () => { clearTimeout(timeoutId); GLOBAL_KEYS.forEach(k => delete window[k]); script.remove(); reject(new Error('网络错误')); updateCardError(code); };
+            document.head.appendChild(script);
+        });
+    }
+    function updateCardError(code) { appData.fundsCache[code] = { code, name: code, error: true }; renderCards(); renderGroupSummaryPanel(); }
+
+    // ========== 获取真实持仓数据接口（跨域解决） ==========
+    function fetchFundStockData(code) {
+        return new Promise((resolve) => {
+            const script = document.createElement('script');
+            script.src = `https://fundf10.eastmoney.com/FundArchivesDatas.aspx?type=jjcc&code=${code}&topline=10&rt=${Math.random()}`;
+            script.charset = 'utf-8';
+            const timeout = setTimeout(() => { script.remove(); resolve([]); }, 8000);
+            script.onload = () => {
+                clearTimeout(timeout);
+                let stocks = [];
+                try {
+                    if (window.apidata && window.apidata.content) {
+                        const tempDiv = document.createElement('div');
+                        tempDiv.innerHTML = window.apidata.content;
+                        let targetTable = null;
+                        const tables = tempDiv.querySelectorAll('table');
+                        for (let t of tables) { if (t.innerHTML.includes('占净值比例')) { targetTable = t; break; } }
+                        
+                        if (targetTable) {
+                            let nameIdx = -1, ratioIdx = -1;
+                            targetTable.querySelectorAll('thead th').forEach((th, idx) => {
+                                const text = th.textContent.trim();
+                                if (text.includes('名称')) nameIdx = idx;
+                                if (text.includes('比例')) ratioIdx = idx;
+                            });
+                            if (nameIdx !== -1 && ratioIdx !== -1) {
+                                targetTable.querySelectorAll('tbody tr').forEach(tr => {
+                                    const tds = tr.querySelectorAll('td');
+                                    if (tds.length > Math.max(nameIdx, ratioIdx)) {
+                                        const name = tds[nameIdx].textContent.trim();
+                                        const ratio = tds[ratioIdx].textContent.trim();
+                                        if (name && name !== '---') stocks.push({ name, percent: ratio });
+                                    }
+                                });
+                            }
+                        }
+                    }
+                } catch (e) { console.warn('解析持仓出错', e); }
                 script.remove();
-                reject(new Error('网络错误'));
-                updateCardError(code);
+                try { delete window.apidata; } catch(e){}
+                resolve(stocks);
             };
+            script.onerror = () => { clearTimeout(timeout); script.remove(); resolve([]); };
             document.head.appendChild(script);
         });
     }
 
-    function updateCardError(code) {
-        appData.fundsCache[code] = { code, name: code, error: true };
-        renderCards();
-        renderGroupSummaryPanel();
-    }
-
-    // ========== 模态框（简况） ==========
+    // ========== 模态框与简况渲染 ==========
     function openChartModal() {
         if (!currentModalFund) return;
         const modal = document.getElementById('chartModal');
         document.getElementById('modalFundName').textContent = `${currentModalFund.name} (${currentModalFund.code})`;
         modal.classList.add('active');
-        showChartTable();
-        renderFundChart(15);
-        renderNetWorthTable(15);
-        
-        document.querySelectorAll('.period-btn:not(#fundInfoBtn)').forEach(btn => {
-            btn.addEventListener('click', function() {
-                document.querySelectorAll('.period-btn').forEach(b => b.classList.remove('active'));
-                this.classList.add('active');
-                showChartTable();
-                const days = parseInt(this.dataset.days);
-                renderFundChart(days);
-                renderNetWorthTable(days);
-            });
-        });
-        
-        document.getElementById('fundInfoBtn').addEventListener('click', function() {
-            document.querySelectorAll('.period-btn').forEach(b => b.classList.remove('active'));
-            this.classList.add('active');
-            showFundInfo();
-            renderFundInfo();
-        });
-    }
-    
-    function showChartTable() {
         document.getElementById('chartTableArea').style.display = 'block';
         document.getElementById('fundInfoArea').style.display = 'none';
+        document.querySelectorAll('.period-btn').forEach(b => b.classList.remove('active'));
+        document.querySelector('.period-btn[data-days="15"]').classList.add('active');
+        renderFundChart(15); renderNetWorthTable(15);
+        
+        document.querySelectorAll('.period-btn:not(#fundInfoBtn)').forEach(btn => btn.addEventListener('click', function() {
+            document.querySelectorAll('.period-btn').forEach(b => b.classList.remove('active')); this.classList.add('active');
+            document.getElementById('chartTableArea').style.display = 'block'; document.getElementById('fundInfoArea').style.display = 'none';
+            const days = parseInt(this.dataset.days); renderFundChart(days); renderNetWorthTable(days);
+        }, {once: true})); // 这里防止绑定多次事件
+        
+        document.getElementById('fundInfoBtn').addEventListener('click', function() {
+            document.querySelectorAll('.period-btn').forEach(b => b.classList.remove('active')); this.classList.add('active');
+            document.getElementById('chartTableArea').style.display = 'none'; document.getElementById('fundInfoArea').style.display = 'block';
+            renderFundInfo();
+        }, {once: true});
     }
-    function showFundInfo() {
-        document.getElementById('chartTableArea').style.display = 'none';
-        document.getElementById('fundInfoArea').style.display = 'block';
-    }
-    
-    // ========== 修复后的简况渲染逻辑 ==========
-    function renderFundInfo() {
+
+    // 修复模态框事件积累的问题，统一使用委托
+    document.getElementById('periodSelector').addEventListener('click', (e) => {
+        if (e.target.classList.contains('period-btn') && !e.target.id) {
+            document.querySelectorAll('.period-btn').forEach(b => b.classList.remove('active')); e.target.classList.add('active');
+            document.getElementById('chartTableArea').style.display = 'block'; document.getElementById('fundInfoArea').style.display = 'none';
+            const days = parseInt(e.target.dataset.days); renderFundChart(days); renderNetWorthTable(days);
+        } else if (e.target.id === 'fundInfoBtn') {
+            document.querySelectorAll('.period-btn').forEach(b => b.classList.remove('active')); e.target.classList.add('active');
+            document.getElementById('chartTableArea').style.display = 'none'; document.getElementById('fundInfoArea').style.display = 'block';
+            renderFundInfo();
+        }
+    });
+
+    async function renderFundInfo() {
         const fund = currentModalFund;
         if (!fund) return;
         const container = document.getElementById('fundInfoContent');
         
-        // 1. 基金经理信息渲染
         let managerHtml = '<div class="info-section"><h4>👨‍💼 基金经理</h4>';
         if (fund.manager && (Array.isArray(fund.manager) && fund.manager.length > 0)) {
-            managerHtml += '<div class="info-grid">';
-            fund.manager.forEach(m => {
-                const name = m.name || m.managerName || '--';
-                const workDate = m.workTime || m.workDate || m.startDate || '--';
-                managerHtml += `<div class="info-item"><div class="info-label">经理</div><div class="info-value">${name}</div><div style="font-size:0.7rem;color:#5c6b93;margin-top:4px;">任职时间: ${workDate}</div></div>`;
-            });
-            managerHtml += '</div>';
+            managerHtml += '<div class="info-grid">' + fund.manager.map(m => `<div class="info-item"><div class="info-label">经理</div><div class="info-value">${m.name || m.managerName || '--'}</div><div style="font-size:0.7rem;color:#5c6b93;margin-top:4px;">任职时间: ${m.workTime || m.workDate || m.startDate || '--'}</div></div>`).join('') + '</div>';
         } else if (fund.manager && typeof fund.manager === 'object') {
-            const name = fund.manager.name || fund.manager.managerName || '--';
-            const workDate = fund.manager.workTime || fund.manager.workDate || fund.manager.startDate || '--';
-            managerHtml += '<div class="info-grid">';
-            managerHtml += `<div class="info-item"><div class="info-label">经理</div><div class="info-value">${name}</div><div style="font-size:0.7rem;color:#5c6b93;margin-top:4px;">任职时间: ${workDate}</div></div>`;
-            managerHtml += '</div>';
-        } else {
-            managerHtml += '<p style="color:#9aa9c2;">暂无基金经理信息</p>';
-        }
+            managerHtml += `<div class="info-grid"><div class="info-item"><div class="info-label">经理</div><div class="info-value">${fund.manager.name || fund.manager.managerName || '--'}</div><div style="font-size:0.7rem;color:#5c6b93;margin-top:4px;">任职时间: ${fund.manager.workTime || fund.manager.workDate || fund.manager.startDate || '--'}</div></div></div>`;
+        } else { managerHtml += '<p style="color:#9aa9c2;">暂无基金经理信息</p>'; }
         managerHtml += '</div>';
 
-        // 2. 资产配置信息渲染
         let assetHtml = '<div class="info-section"><h4>📊 资产配置</h4>';
         if (fund.asset && typeof fund.asset === 'object') {
-            const dateStr = fund.asset.date ? ` <span style="font-size:0.75rem;color:#5c6b93;font-weight:normal;">(截至 ${fund.asset.date})</span>` : '';
-            assetHtml = `<div class="info-section"><h4>📊 资产配置${dateStr}</h4>`;
-            assetHtml += '<div class="info-grid">';
-            assetHtml += `<div class="info-item"><div class="info-label">股票配置</div><div class="info-value">${fund.asset.stock !== undefined ? fund.asset.stock + '%' : '--'}</div></div>`;
-            assetHtml += `<div class="info-item"><div class="info-label">债券配置</div><div class="info-value">${fund.asset.bond !== undefined ? fund.asset.bond + '%' : '--'}</div></div>`;
-            assetHtml += `<div class="info-item"><div class="info-label">现金配置</div><div class="info-value">${fund.asset.cash !== undefined ? fund.asset.cash + '%' : '--'}</div></div>`;
-            assetHtml += '</div>';
-        } else {
-            assetHtml += '<p style="color:#9aa9c2;">暂无资产配置信息</p>';
-        }
-        assetHtml += '</div>';
+            assetHtml = `<div class="info-section"><h4>📊 资产配置${fund.asset.date ? ` <span style="font-size:0.75rem;color:#5c6b93;font-weight:normal;">(截至 ${fund.asset.date})</span>` : ''}</h4><div class="info-grid"><div class="info-item"><div class="info-label">股票配置</div><div class="info-value">${fund.asset.stock !== undefined ? fund.asset.stock + '%' : '--'}</div></div><div class="info-item"><div class="info-label">债券配置</div><div class="info-value">${fund.asset.bond !== undefined ? fund.asset.bond + '%' : '--'}</div></div><div class="info-item"><div class="info-label">现金配置</div><div class="info-value">${fund.asset.cash !== undefined ? fund.asset.cash + '%' : '--'}</div></div></div></div>`;
+        } else { assetHtml += '<p style="color:#9aa9c2;">暂无资产配置信息</p></div>'; }
 
-        // 3. 股票持仓提示（数据源本身限制导致没有持仓，增加友好提示）
-        let stockHtml = '<div class="info-section"><h4>🏢 前十大股票持仓</h4>';
-        if (fund.stock && Array.isArray(fund.stock) && fund.stock.length > 0) {
-            stockHtml += '<table class="stock-table"><thead><tr><th>股票名称</th><th>占净值比例(%)</th></tr></thead><tbody>';
-            fund.stock.slice(0, 10).forEach(s => {
-                const name = s.name || s.stockName || s.code || '--';
-                const percent = s.percent || s.percentage || s.ratio || '--';
-                stockHtml += `<tr><td>${name}</td><td>${percent}</td></tr>`;
-            });
-            stockHtml += '</tbody></table>';
+        let stockHtml = '<div class="info-section"><h4>🏢 前十大持仓明细</h4>';
+        if (fund.stockLoaded) {
+            if (fund.stock && fund.stock.length > 0) {
+                stockHtml += '<table class="stock-table"><thead><tr><th>标的名称</th><th>占净值比例</th></tr></thead><tbody>';
+                fund.stock.forEach(s => { stockHtml += `<tr><td>${s.name}</td><td>${s.percent}</td></tr>`; });
+                stockHtml += '</tbody></table></div>';
+            } else { stockHtml += '<p style="color:#9aa9c2;font-size:0.8rem;">该基金暂未披露持仓数据，或暂无股票债券持仓明细。</p></div>'; }
+            container.innerHTML = managerHtml + assetHtml + stockHtml;
         } else {
-            stockHtml += '<p style="color:#9aa9c2;font-size:0.8rem;">提示：受数据接口限制，暂无法获取实时股票持仓明细，请在专业金融APP中查看。</p>';
+            stockHtml += '<div style="color:#3b82f6;font-size:0.8rem;padding:10px 0;">🔄 正在极速拉取最新持仓明细...</div></div>';
+            container.innerHTML = managerHtml + assetHtml + stockHtml;
+            try {
+                const stocks = await fetchFundStockData(fund.code);
+                fund.stock = stocks; fund.stockLoaded = true;
+                if (currentModalFund && currentModalFund.code === fund.code) renderFundInfo();
+            } catch(e) {
+                fund.stock = []; fund.stockLoaded = true;
+                if (currentModalFund && currentModalFund.code === fund.code) renderFundInfo();
+            }
         }
-        stockHtml += '</div>';
-
-        container.innerHTML = managerHtml + assetHtml + stockHtml;
     }
 
-    function closeChartModal() {
-        document.getElementById('chartModal').classList.remove('active');
-        if (chartInstance) { chartInstance.destroy(); chartInstance = null; }
-    }
+    function closeChartModal() { document.getElementById('chartModal').classList.remove('active'); if (chartInstance) { chartInstance.destroy(); chartInstance = null; } }
     
     function renderFundChart(days) {
         if (!currentModalFund || !currentModalFund.netWorth) return;
@@ -1669,136 +1269,66 @@
         if (chartInstance) chartInstance.destroy();
         const data = currentModalFund.netWorth.slice(-days);
         chartInstance = new Chart(ctx, {
-            type: 'line',
-            data: {
-                labels: data.map(item => formatDate(item.x)),
-                datasets: [{
-                    label: '单位净值', data: data.map(item => item.y),
-                    borderColor: '#3b82f6', backgroundColor: 'rgba(59,130,246,0.05)',
-                    borderWidth: 3, tension: 0.2, fill: true, pointRadius: 3,
-                    pointBackgroundColor: 'white', pointBorderColor: '#3b82f6'
-                }]
-            },
-            options: {
-                responsive: true, maintainAspectRatio: false,
-                plugins: { legend: { display: false }, tooltip: { backgroundColor: '#0b1b32', titleColor: '#fff', bodyColor: '#e2e8f0', padding: 10, cornerRadius: 12 } },
-                scales: { x: { grid: { display: false }, ticks: { color: '#4b587c' } }, y: { grid: { color: '#e9ecf5' }, ticks: { color: '#4b587c' } } }
-            }
+            type: 'line', data: { labels: data.map(i => formatDate(i.x)), datasets: [{ label: '单位净值', data: data.map(i => i.y), borderColor: '#3b82f6', backgroundColor: 'rgba(59,130,246,0.05)', borderWidth: 3, tension: 0.2, fill: true, pointRadius: 3, pointBackgroundColor: 'white', pointBorderColor: '#3b82f6' }] },
+            options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { display: false }, tooltip: { backgroundColor: '#0b1b32', titleColor: '#fff', bodyColor: '#e2e8f0', padding: 10, cornerRadius: 12 } }, scales: { x: { grid: { display: false }, ticks: { color: '#4b587c' } }, y: { grid: { color: '#e9ecf5' }, ticks: { color: '#4b587c' } } } }
         });
     }
     
     function renderNetWorthTable(days) {
         if (!currentModalFund || !currentModalFund.netWorth) return;
-        const container = document.getElementById('netWorthTable');
         document.getElementById('tableTitle').textContent = `最近${days}日净值明细`;
         const data = currentModalFund.netWorth.slice(-days);
         let html = `<table><thead><tr><th>日期</th><th>单位净值</th><th>涨跌额</th><th>涨跌幅</th></tr></thead><tbody>`;
         for (let i = data.length-1; i >= 0; i--) {
-            const item = data[i];
-            const prev = i>0 ? data[i-1] : null;
-            const change = prev ? (item.y - prev.y).toFixed(4) : '--';
-            const changeRate = prev ? ((item.y - prev.y)/prev.y*100).toFixed(2) : '--';
-            const cls = prev ? (parseFloat(change)>=0 ? 'positive' : 'negative') : '';
+            const item = data[i], prev = i>0 ? data[i-1] : null, change = prev ? (item.y - prev.y).toFixed(4) : '--', changeRate = prev ? ((item.y - prev.y)/prev.y*100).toFixed(2) : '--', cls = prev ? (parseFloat(change)>=0 ? 'positive' : 'negative') : '';
             html += `<tr><td>${formatDate(item.x)}</td><td>${item.y.toFixed(4)}</td><td class="${cls}">${change}</td><td class="${cls}">${changeRate!=='--'?changeRate+'%':'--'}</td></tr>`;
         }
-        html += '</tbody></table>';
-        container.innerHTML = html;
+        document.getElementById('netWorthTable').innerHTML = html + '</tbody></table>';
     }
 
     // ========== 初始化 ==========
     async function init() {
-        loadAppData();
-        renderGroups();
-        renderCards();
-        renderGroupSummaryPanel();
+        loadAppData(); renderGroups(); renderCards(); renderGroupSummaryPanel();
 
-        document.querySelectorAll('.view-btn').forEach(btn => {
-            btn.addEventListener('click', function() {
-                document.querySelectorAll('.view-btn').forEach(b => b.classList.remove('active'));
-                this.classList.add('active');
-                viewMode = this.dataset.view;
-                renderCards();
-            });
-        });
-        document.querySelectorAll('#groupSummarySort span').forEach(span => {
-            span.addEventListener('click', function() {
-                document.querySelectorAll('#groupSummarySort span').forEach(s => s.classList.remove('active'));
-                this.classList.add('active');
-                groupSummarySortDir = this.dataset.dir;
-                renderGroupSummaryPanel();
-            });
-        });
-        document.getElementById('sortDirectionBtn').addEventListener('click', function() {
-            sortDirection = sortDirection === 'desc' ? 'asc' : 'desc';
-            this.textContent = sortDirection === 'desc' ? '降序' : '升序';
-            this.classList.toggle('active');
-            renderCards();
-        });
-        document.getElementById('sortRuleSelect').addEventListener('change', function() {
-            sortRule = this.value;
-            renderCards();
-        });
+        document.querySelectorAll('.view-btn').forEach(btn => btn.addEventListener('click', function() {
+            document.querySelectorAll('.view-btn').forEach(b => b.classList.remove('active')); this.classList.add('active'); viewMode = this.dataset.view; renderCards();
+        }));
+        document.querySelectorAll('#groupSummarySort span').forEach(span => span.addEventListener('click', function() {
+            document.querySelectorAll('#groupSummarySort span').forEach(s => s.classList.remove('active')); this.classList.add('active'); groupSummarySortDir = this.dataset.dir; renderGroupSummaryPanel();
+        }));
+        document.getElementById('sortDirectionBtn').addEventListener('click', function() { sortDirection = sortDirection === 'desc' ? 'asc' : 'desc'; this.textContent = sortDirection === 'desc' ? '降序' : '升序'; this.classList.toggle('active'); renderCards(); });
+        document.getElementById('sortRuleSelect').addEventListener('change', function() { sortRule = this.value; renderCards(); });
 
         await loadMasterFundList();
 
-        const searchInput = document.getElementById('fundSearchInput');
-        const dropdown = document.getElementById('suggestionDropdown');
-        let selectedCode = '';
-        async function handleSearchInput() {
+        const searchInput = document.getElementById('fundSearchInput'), dropdown = document.getElementById('suggestionDropdown');
+        let selectedCode = '', searchTimer;
+        searchInput.addEventListener('input', () => { clearTimeout(searchTimer); searchTimer = setTimeout(async () => {
             const kw = searchInput.value.trim();
             if (kw.length < 2) { dropdown.classList.remove('active'); selectedCode=''; return; }
             if (!masterListLoaded) await loadMasterFundList();
-            if (!masterFundList.length) return;
-            const lower = kw.toLowerCase();
-            const matched = masterFundList.filter(f => f.code.startsWith(kw) || f.name.includes(lower) || f.short.includes(lower)).slice(0,12);
-            if (matched.length === 0) { dropdown.classList.remove('active'); return; }
-            let html = '';
-            matched.forEach(f => {
-                html += `<div class="suggestion-item" data-code="${f.code}" data-name="${f.name}"><span class="suggestion-name">${f.name}</span><span><span class="suggestion-code">${f.code}</span><span class="suggestion-type">${f.type||''}</span></span></div>`;
-            });
-            dropdown.innerHTML = html;
+            const matched = masterFundList.filter(f => f.code.startsWith(kw) || f.name.includes(kw.toLowerCase()) || f.short.includes(kw.toLowerCase())).slice(0,12);
+            if (!matched.length) { dropdown.classList.remove('active'); return; }
+            dropdown.innerHTML = matched.map(f => `<div class="suggestion-item" data-code="${f.code}" data-name="${f.name}"><span class="suggestion-name">${f.name}</span><span><span class="suggestion-code">${f.code}</span><span class="suggestion-type">${f.type||''}</span></span></div>`).join('');
             dropdown.classList.add('active');
-        }
-        let searchTimer;
-        searchInput.addEventListener('input', () => { clearTimeout(searchTimer); searchTimer = setTimeout(handleSearchInput, 300); });
+        }, 300); });
         dropdown.addEventListener('click', (e) => {
-            const item = e.target.closest('.suggestion-item');
-            if (!item) return;
-            selectedCode = item.dataset.code;
-            searchInput.value = `${item.dataset.name} (${item.dataset.code})`;
-            dropdown.classList.remove('active');
+            const item = e.target.closest('.suggestion-item'); if (!item) return;
+            selectedCode = item.dataset.code; searchInput.value = `${item.dataset.name} (${item.dataset.code})`; dropdown.classList.remove('active');
         });
-        document.addEventListener('click', (e) => {
-            if (!searchInput.contains(e.target) && !dropdown.contains(e.target)) dropdown.classList.remove('active');
-        });
+        document.addEventListener('click', (e) => { if (!searchInput.contains(e.target) && !dropdown.contains(e.target)) dropdown.classList.remove('active'); });
 
         document.getElementById('addFundBtn').addEventListener('click', async () => {
-            let code = selectedCode;
-            if (!code) {
-                const match = searchInput.value.match(/\d{6}/);
-                if (match) code = match[0];
-            }
-            if (!code || !/^\d{6}$/.test(code)) { showToast('请从下拉列表选择正确的基金，或输入6位代码'); return; }
-            const targetGroupId = document.getElementById('groupSelect').value;
-            if (!targetGroupId) { showToast('请选择分组'); return; }
-            if (checkFundDuplicate(targetGroupId, code)) { showToast('该分组已存在此基金'); return; }
-            const targetGroup = appData.groups.find(g => g.id === targetGroupId);
-            if (targetGroup) {
-                targetGroup.fundCodes.push(code);
-                saveAppData();
-                renderGroups();
-                searchInput.value = '';
-                selectedCode = '';
-                try {
-                    await loadFundData(code, true);
-                    renderCards();
-                    renderGroupSummaryPanel();
-                    showToast('基金添加成功');
-                } catch (e) { 
-                    renderCards(); 
-                    renderGroupSummaryPanel();
-                    showToast('添加成功，但数据加载失败'); 
-                }
+            let code = selectedCode || (searchInput.value.match(/\d{6}/)?.[0]);
+            if (!code || !/^\d{6}$/.test(code)) { showToast('请输入有效的6位基金代码或选择列表项'); return; }
+            const tgtId = document.getElementById('groupSelect').value;
+            if (!tgtId) { showToast('请选择分组'); return; }
+            if (checkFundDuplicate(tgtId, code)) { showToast('分组中已存在该基金'); return; }
+            const tgt = appData.groups.find(g => g.id === tgtId);
+            if (tgt) {
+                tgt.fundCodes.push(code); saveAppData(); renderGroups(); searchInput.value = ''; selectedCode = '';
+                try { await loadFundData(code, true); renderCards(); renderGroupSummaryPanel(); showToast('添加成功'); } 
+                catch (e) { renderCards(); renderGroupSummaryPanel(); showToast('已添加，但数据加载失败'); }
             }
         });
 
@@ -1809,34 +1339,20 @@
                     appData = cloudData;
                     const defaultGroup = appData.groups.find(g => g.id === 'default');
                     if (defaultGroup && defaultGroup.name === '默认') defaultGroup.name = '全部';
-                    saveAppData();
-                    renderGroups();
-                    renderCards();
-                    renderGroupSummaryPanel();
+                    saveAppData(); renderGroups(); renderCards(); renderGroupSummaryPanel();
                     document.getElementById('syncStatus').textContent = '云端数据已同步';
                 }
-            } catch (e) { console.warn('Cloud load failed', e); }
+            } catch (e) { console.warn('Cloud sync error', e); }
         }
-        const allCodes = getAllFundCodes();
-        for (const code of allCodes) {
-            try { await loadFundData(code); } catch (e) { console.warn(`Load ${code} failed`, e); }
-        }
+        for (const code of getAllFundCodes()) { try { await loadFundData(code); } catch (e) {} }
 
         document.getElementById('closeModalBtn')?.addEventListener('click', closeChartModal);
         document.getElementById('chartModal')?.addEventListener('click', (e) => { if (e.target.id === 'chartModal') closeChartModal(); });
         document.getElementById('syncToCloudBtn')?.addEventListener('click', async () => {
-            if (!s3) { showToast('云端同步未配置'); return; }
+            if (!s3) { showToast('云同步未配置'); return; }
             const statusEl = document.getElementById('syncStatus');
-            try {
-                statusEl.textContent = '同步中...';
-                await saveToCloud(appData);
-                statusEl.textContent = '同步成功 ✓';
-                showToast('云端同步成功');
-            } catch (e) {
-                console.error(e);
-                statusEl.textContent = '同步失败';
-                showToast('云端同步失败');
-            }
+            try { statusEl.textContent = '同步中...'; await saveToCloud(appData); statusEl.textContent = '同步成功 ✓'; showToast('同步成功'); } 
+            catch (e) { statusEl.textContent = '同步失败'; showToast('同步失败'); }
         });
     }
 
