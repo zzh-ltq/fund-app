@@ -5,7 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
     <meta name="apple-mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-status-bar-style" content="white">
-    <title>基金看板 · 分组默认+简况+板块标签</title>
+    <title>基金看板 · 板块优化+简况修复</title>
     <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
     <script src="https://sdk.amazonaws.com/js/aws-sdk-2.1692.0.min.js"></script>
     <style>
@@ -770,7 +770,7 @@
 <body>
 <div class="container">
     <div class="header">
-        <h1>📈 基金分组看板 <span>简况+板块标签</span></h1>
+        <h1>📈 基金分组看板 <span>板块优化+简况修复</span></h1>
         <div class="sub">基金名称完整显示 · 15日最大累计跌幅 · 支持名称搜索</div>
         
         <div class="group-tabs-wrapper">
@@ -1048,22 +1048,25 @@
         return codes;
     }
 
-    // 从基金名称中提取板块标签
+    // ========== 板块检测（扩展关键词） ==========
     function detectSector(fundName) {
+        if (!fundName) return null;
         const keywords = [
-            '医疗', '医药', '健康', '生物', '中药',
-            '新能源', '光伏', '风电', '锂电', '电池',
+            '医疗', '医药', '健康', '生物', '中药', '药',
+            '新能源', '光伏', '风电', '锂电', '电池', '能源',
             '环保', '环境',
-            '科技', '信息', '软件', '半导体', '芯片', '电子',
-            '高端制造', '制造',
+            '科技', '信息', '软件', '半导体', '芯片', '电子', '计算机', '人工智能', 'AI',
+            '高端制造', '制造', '工业', '机械', '设备',
             '军工', '航天', '国防',
-            '消费', '食品', '饮料', '白酒',
-            '金融', '银行', '保险', '证券',
+            '消费', '食品', '饮料', '白酒', '酒',
+            '金融', '银行', '保险', '证券', '券商',
             '地产', '房地产',
-            '农业', '农林牧渔',
-            '有色', '金属', '煤炭', '钢铁', '化工',
-            '文体', '传媒', '游戏',
-            '互联网', '移动互联'
+            '农业', '农林牧渔', '养殖',
+            '有色', '金属', '煤炭', '钢铁', '化工', '材料',
+            '文体', '传媒', '游戏', '娱乐',
+            '互联网', '移动互联', '电商', '物流',
+            '黄金', '珠宝', '资源', '商品',
+            '优选', '精选', '价值', '成长', '蓝筹', '红利', '策略'
         ];
         for (let kw of keywords) {
             if (fundName.includes(kw)) {
@@ -1220,7 +1223,7 @@
         });
     }
 
-    // ========== 分组渲染（顶部标签，全部不显示风险标记）==========
+    // ========== 分组渲染（顶部标签）==========
     function renderGroups() {
         const tabsContainer = document.getElementById('groupTabs');
         const groupSelect = document.getElementById('groupSelect');
@@ -1371,7 +1374,7 @@
             container.className = 'card-grid';
             container.innerHTML = cardsHtml;
         } else {
-            // 列表视图类似添加板块标签，为了简洁省略，但可保持原有
+            // 列表视图添加板块标签
             let listHtml = '';
             currentFundCodes.forEach(code => {
                 const fund = appData.fundsCache[code];
@@ -1462,14 +1465,14 @@
         });
     }
 
-    // ========== 基金数据加载（扩展：获取基金经理和持仓）==========
+    // ========== 基金数据加载（扩展：获取基金经理和持仓，兼容多种变量名）==========
     async function loadFundData(code, forceRefresh = false) {
         if (!forceRefresh && appData.fundsCache[code]?.netWorth) {
             return appData.fundsCache[code];
         }
         renderLoadingCard(code);
         return new Promise((resolve, reject) => {
-            const GLOBAL_KEYS = ['Data_netWorthTrend','fund_name','fS_name','fund_manager','fund_asset','fund_stockportfolio'];
+            const GLOBAL_KEYS = ['Data_netWorthTrend','fund_name','fS_name','fund_manager','fund_asset','fund_stockportfolio','Data_fundManager','Data_assetAllocation','Data_stockPortfolio'];
             GLOBAL_KEYS.forEach(k => delete window[k]);
             const script = document.createElement('script');
             script.src = `https://fund.eastmoney.com/pingzhongdata/${code}.js?t=${Date.now()}`;
@@ -1485,10 +1488,11 @@
                         if (netWorth.length > MAX_HISTORY_POINTS) netWorth = netWorth.slice(-MAX_HISTORY_POINTS);
                     }
                     const name = window.fund_name || window.fS_name || code;
-                    // 获取额外信息
-                    const manager = window.fund_manager || null; // 数组
-                    const asset = window.fund_asset || null;     // 资产配置
-                    const stock = window.fund_stockportfolio || null; // 股票持仓
+                    // 尝试多个可能的变量名获取额外信息
+                    const manager = window.fund_manager || window.Data_fundManager || null;
+                    const asset = window.fund_asset || window.Data_assetAllocation || null;
+                    const stock = window.fund_stockportfolio || window.Data_stockPortfolio || null;
+                    
                     GLOBAL_KEYS.forEach(k => delete window[k]);
                     script.remove();
                     if (netWorth && netWorth.length > 0) {
@@ -1561,44 +1565,68 @@
         const fund = currentModalFund;
         if (!fund) return;
         const container = document.getElementById('fundInfoContent');
-        let html = '<div class="info-section"><h4>基金经理</h4>';
-        if (fund.manager && fund.manager.length > 0) {
-            html += '<div class="info-grid">';
+        
+        // 基金经理
+        let managerHtml = '<div class="info-section"><h4>基金经理</h4>';
+        if (fund.manager && (Array.isArray(fund.manager) && fund.manager.length > 0)) {
+            managerHtml += '<div class="info-grid">';
             fund.manager.forEach(m => {
-                html += `<div class="info-item"><div class="info-label">经理</div><div class="info-value">${m.name || '--'}</div><div style="font-size:0.7rem;color:#5c6b93;">任职日期: ${m.workDate || '--'}</div></div>`;
+                const name = m.name || m.managerName || '--';
+                const workDate = m.workDate || m.startDate || '--';
+                managerHtml += `<div class="info-item"><div class="info-label">经理</div><div class="info-value">${name}</div><div style="font-size:0.7rem;color:#5c6b93;">任职日期: ${workDate}</div></div>`;
             });
-            html += '</div>';
+            managerHtml += '</div>';
+        } else if (fund.manager && typeof fund.manager === 'object') {
+            // 可能是单个对象
+            const name = fund.manager.name || fund.manager.managerName || '--';
+            const workDate = fund.manager.workDate || fund.manager.startDate || '--';
+            managerHtml += '<div class="info-grid">';
+            managerHtml += `<div class="info-item"><div class="info-label">经理</div><div class="info-value">${name}</div><div style="font-size:0.7rem;color:#5c6b93;">任职日期: ${workDate}</div></div>`;
+            managerHtml += '</div>';
         } else {
-            html += '<p style="color:#9aa9c2;">暂无基金经理信息</p>';
+            managerHtml += '<p style="color:#9aa9c2;">暂无基金经理信息</p>';
         }
-        html += '</div>';
+        managerHtml += '</div>';
 
-        html += '<div class="info-section"><h4>资产配置</h4>';
-        if (fund.asset && fund.asset.length > 0) {
+        // 资产配置
+        let assetHtml = '<div class="info-section"><h4>资产配置</h4>';
+        if (fund.asset && Array.isArray(fund.asset) && fund.asset.length > 0) {
             const lastAsset = fund.asset[fund.asset.length-1]; // 最新一期
-            html += '<div class="info-grid">';
-            html += `<div class="info-item"><div class="info-label">股票</div><div class="info-value">${lastAsset.stock || '--'}%</div></div>`;
-            html += `<div class="info-item"><div class="info-label">债券</div><div class="info-value">${lastAsset.bond || '--'}%</div></div>`;
-            html += `<div class="info-item"><div class="info-label">现金</div><div class="info-value">${lastAsset.cash || '--'}%</div></div>`;
-            html += `<div class="info-item"><div class="info-label">其他</div><div class="info-value">${lastAsset.other || '--'}%</div></div>`;
-            html += '</div>';
+            assetHtml += '<div class="info-grid">';
+            assetHtml += `<div class="info-item"><div class="info-label">股票</div><div class="info-value">${lastAsset.stock !== undefined ? lastAsset.stock + '%' : '--'}</div></div>`;
+            assetHtml += `<div class="info-item"><div class="info-label">债券</div><div class="info-value">${lastAsset.bond !== undefined ? lastAsset.bond + '%' : '--'}</div></div>`;
+            assetHtml += `<div class="info-item"><div class="info-label">现金</div><div class="info-value">${lastAsset.cash !== undefined ? lastAsset.cash + '%' : '--'}</div></div>`;
+            assetHtml += `<div class="info-item"><div class="info-label">其他</div><div class="info-value">${lastAsset.other !== undefined ? lastAsset.other + '%' : '--'}</div></div>`;
+            assetHtml += '</div>';
+        } else if (fund.asset && typeof fund.asset === 'object') {
+            // 单个对象
+            assetHtml += '<div class="info-grid">';
+            assetHtml += `<div class="info-item"><div class="info-label">股票</div><div class="info-value">${fund.asset.stock !== undefined ? fund.asset.stock + '%' : '--'}</div></div>`;
+            assetHtml += `<div class="info-item"><div class="info-label">债券</div><div class="info-value">${fund.asset.bond !== undefined ? fund.asset.bond + '%' : '--'}</div></div>`;
+            assetHtml += `<div class="info-item"><div class="info-label">现金</div><div class="info-value">${fund.asset.cash !== undefined ? fund.asset.cash + '%' : '--'}</div></div>`;
+            assetHtml += `<div class="info-item"><div class="info-label">其他</div><div class="info-value">${fund.asset.other !== undefined ? fund.asset.other + '%' : '--'}</div></div>`;
+            assetHtml += '</div>';
         } else {
-            html += '<p style="color:#9aa9c2;">暂无资产配置信息</p>';
+            assetHtml += '<p style="color:#9aa9c2;">暂无资产配置信息</p>';
         }
-        html += '</div>';
+        assetHtml += '</div>';
 
-        html += '<div class="info-section"><h4>前十大股票持仓</h4>';
-        if (fund.stock && fund.stock.length > 0) {
-            html += '<table class="stock-table"><thead><tr><th>股票名称</th><th>占净值比例(%)</th></tr></thead><tbody>';
+        // 前十大股票持仓
+        let stockHtml = '<div class="info-section"><h4>前十大股票持仓</h4>';
+        if (fund.stock && Array.isArray(fund.stock) && fund.stock.length > 0) {
+            stockHtml += '<table class="stock-table"><thead><tr><th>股票名称</th><th>占净值比例(%)</th></tr></thead><tbody>';
             fund.stock.slice(0, 10).forEach(s => {
-                html += `<tr><td>${s.name || s.code}</td><td>${s.percent || '--'}</td></tr>`;
+                const name = s.name || s.stockName || s.code || '--';
+                const percent = s.percent || s.percentage || s.ratio || '--';
+                stockHtml += `<tr><td>${name}</td><td>${percent}</td></tr>`;
             });
-            html += '</tbody></table>';
+            stockHtml += '</tbody></table>';
         } else {
-            html += '<p style="color:#9aa9c2;">暂无持仓信息</p>';
+            stockHtml += '<p style="color:#9aa9c2;">暂无持仓信息</p>';
         }
-        html += '</div>';
-        container.innerHTML = html;
+        stockHtml += '</div>';
+
+        container.innerHTML = managerHtml + assetHtml + stockHtml;
     }
 
     function closeChartModal() {
