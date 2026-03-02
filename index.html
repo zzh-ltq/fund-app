@@ -3,10 +3,11 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
-    <title>基金看板 · 手动板块 + 分组重命名</title>
+    <title>基金看板 · 板块下拉修复</title>
     <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
     <script src="https://sdk.amazonaws.com/js/aws-sdk-2.1692.0.min.js"></script>
     <style>
+        /* 保持原有样式，仅补充下拉菜单相关样式 */
         * { box-sizing: border-box; font-family: -apple-system, BlinkMacSystemFont, "SF Pro Text", "PingFang SC", "Hiragino Sans GB", "Heiti SC", "Microsoft YaHei", "WenQuanYi Micro Hei", sans-serif; -webkit-tap-highlight-color: transparent; }
         html, body { background: #f3f5f9; margin: 0; padding: 0; min-height: 100vh; }
         body { padding: env(safe-area-inset-top) 16px env(safe-area-inset-bottom) 16px; display: flex; flex-direction: column; align-items: center; }
@@ -87,7 +88,7 @@
         .fund-code { font-size: 0.7rem; background: #eef2f9; padding: 3px 8px; border-radius: 40px; color: #4b587c; display: inline-block; }
         .sector-tag { font-size: 0.65rem; background: #dbeafe; color: #1d4ed8; padding: 3px 8px; border-radius: 30px; display: inline-block; font-weight: 500; margin-right: 4px; cursor: pointer; }
         .sector-selector { position: relative; display: inline-block; }
-        .sector-dropdown { position: absolute; top: 100%; left: 0; background: white; border: 1px solid #e9ecf5; border-radius: 8px; box-shadow: 0 4px 12px rgba(0,0,0,0.1); max-height: 200px; overflow-y: auto; z-index: 100; min-width: 120px; display: none; }
+        .sector-dropdown { position: absolute; top: 100%; left: 0; background: white; border: 1px solid #e9ecf5; border-radius: 8px; box-shadow: 0 4px 12px rgba(0,0,0,0.1); max-height: 200px; overflow-y: auto; z-index: 10000; min-width: 120px; display: none; }
         .sector-dropdown.active { display: block; }
         .sector-dropdown-item { padding: 8px 12px; cursor: pointer; font-size: 0.75rem; }
         .sector-dropdown-item:hover { background: #f0f4ff; }
@@ -157,7 +158,7 @@
 <body>
 <div class="container">
     <div class="header">
-        <h1>📈 基金分组看板 <span>手动板块+重命名</span></h1>
+        <h1>📈 基金分组看板 <span>板块下拉修复</span></h1>
         <div class="sub">基金名称完整显示 · 15日最大累计跌幅 · 手动选择板块</div>
         
         <div class="group-tabs-wrapper">
@@ -463,7 +464,6 @@
                     appData = parsed;
                     const defaultGroup = appData.groups.find(g => g.id === 'default');
                     if (defaultGroup && defaultGroup.name === '默认') defaultGroup.name = '全部';
-                    // 确保每个基金有 sectors 字段
                     if (!appData.fundsCache) appData.fundsCache = {};
                 } else {
                     const oldCodes = Array.isArray(parsed) ? parsed : [];
@@ -637,7 +637,6 @@
             }
         }
 
-        // 点击分组标签切换
         document.querySelectorAll('.group-tab[data-group-id]').forEach(el => {
             el.addEventListener('click', (e) => {
                 if (e.target.classList.contains('delete-group') || e.target.classList.contains('rename-group')) return;
@@ -651,7 +650,6 @@
             });
         });
 
-        // 删除分组
         document.querySelectorAll('.delete-group').forEach(btn => {
             btn.addEventListener('click', (e) => {
                 e.stopPropagation();
@@ -670,7 +668,6 @@
             });
         });
 
-        // 重命名分组
         document.querySelectorAll('.rename-group').forEach(btn => {
             btn.addEventListener('click', (e) => {
                 e.stopPropagation();
@@ -680,7 +677,6 @@
                 const newName = prompt('请输入新的分组名称', group.name);
                 if (!newName || newName.trim() === '') return;
                 const trimmed = newName.trim();
-                // 检查是否已存在（忽略自身）
                 const exists = appData.groups.some(g => g.id !== gid && g.name === trimmed);
                 if (exists) {
                     showToast('分组名称已存在，请使用其他名称');
@@ -709,17 +705,29 @@
         });
     }
 
-    // ========== 板块下拉菜单 ==========
+    // ========== 板块下拉菜单（修复版） ==========
     function attachSectorDropdown(cardElement, code) {
         const fund = appData.fundsCache[code];
         if (!fund) return;
-        // 如果已存在下拉，移除
-        let oldDropdown = cardElement.querySelector('.sector-dropdown');
-        if (oldDropdown) oldDropdown.remove();
 
+        let wrapper = cardElement.querySelector('.fund-code-wrapper');
+        if (!wrapper) return;
+
+        // 移除已存在的板块选择器（防止重复）
+        let existingSelector = wrapper.querySelector('.sector-selector');
+        if (existingSelector) existingSelector.remove();
+
+        // 创建“+板块”按钮容器
         const sectorWrapper = document.createElement('span');
         sectorWrapper.className = 'sector-selector';
-        sectorWrapper.innerHTML = `<span class="sector-tag" style="background:#eef2f9; color:#4b587c;">+ 板块</span>`;
+        const btnSpan = document.createElement('span');
+        btnSpan.className = 'sector-tag';
+        btnSpan.style.background = '#eef2f9';
+        btnSpan.style.color = '#4b587c';
+        btnSpan.textContent = '+ 板块';
+        sectorWrapper.appendChild(btnSpan);
+
+        // 创建下拉菜单
         const dropdown = document.createElement('div');
         dropdown.className = 'sector-dropdown';
         SECTOR_LIST.forEach(sector => {
@@ -730,7 +738,6 @@
                 e.stopPropagation();
                 let selected = fund.sectors || [];
                 if (selected.includes(sector)) {
-                    // 移除
                     selected = selected.filter(s => s !== sector);
                 } else {
                     if (selected.length >= 2) {
@@ -741,43 +748,54 @@
                 }
                 fund.sectors = selected;
                 saveAppData();
-                // 更新卡片上的标签
+                // 刷新卡片上的板块标签（不重建整个卡片）
                 renderCardSectors(cardElement, fund);
                 dropdown.classList.remove('active');
             };
             dropdown.appendChild(item);
         });
         sectorWrapper.appendChild(dropdown);
-        sectorWrapper.onclick = (e) => {
+
+        // 点击按钮切换下拉菜单
+        btnSpan.onclick = (e) => {
             e.stopPropagation();
+            // 关闭其他所有下拉菜单
+            document.querySelectorAll('.sector-dropdown.active').forEach(d => d.classList.remove('active'));
             dropdown.classList.toggle('active');
         };
-        // 将+板块按钮添加到fund-code-wrapper中
-        const wrapper = cardElement.querySelector('.fund-code-wrapper');
-        if (wrapper) wrapper.appendChild(sectorWrapper);
-        // 如果已有板块，也渲染
+
+        // 将按钮添加到 wrapper 末尾
+        wrapper.appendChild(sectorWrapper);
+
+        // 渲染已有的板块标签
         renderCardSectors(cardElement, fund);
     }
 
     function renderCardSectors(cardElement, fund) {
         const wrapper = cardElement.querySelector('.fund-code-wrapper');
         if (!wrapper) return;
-        // 移除现有的板块标签（除了+按钮）
-        const existing = wrapper.querySelectorAll('.sector-tag:not(.sector-selector .sector-tag)');
-        existing.forEach(el => el.remove());
+        // 移除所有现有的板块标签（不包括+按钮本身）
+        const existingTags = wrapper.querySelectorAll('.sector-tag:not(.sector-selector .sector-tag)');
+        existingTags.forEach(el => el.remove());
+
         if (fund.sectors && fund.sectors.length > 0) {
             fund.sectors.forEach(s => {
                 const tag = document.createElement('span');
                 tag.className = 'sector-tag';
                 tag.textContent = s;
-                // 可点击移除
                 tag.onclick = (e) => {
                     e.stopPropagation();
                     fund.sectors = fund.sectors.filter(ss => ss !== s);
                     saveAppData();
                     tag.remove();
                 };
-                wrapper.insertBefore(tag, wrapper.lastElementChild); // 插入到+按钮之前
+                // 插入到+按钮之前
+                const selector = wrapper.querySelector('.sector-selector');
+                if (selector) {
+                    wrapper.insertBefore(tag, selector);
+                } else {
+                    wrapper.appendChild(tag);
+                }
             });
         }
     }
@@ -827,7 +845,7 @@
                                     <div class="fund-title">${fund.name || code}</div>
                                     <div class="fund-code-wrapper">
                                         <span class="fund-code">${code}</span>
-                                        <!-- 板块标签和下拉按钮将动态插入 -->
+                                        <!-- 板块下拉组件将动态插入此处 -->
                                     </div>
                                 </div>
                                 <button class="delete-btn" data-code="${code}">✕</button>
@@ -866,7 +884,7 @@
                 attachSectorDropdown(card, code);
             });
         } else {
-            // 列表视图（类似处理）
+            // 列表视图（简化处理，同样支持板块展示）
             let listHtml = '';
             currentFundCodes.forEach(code => {
                 const fund = appData.fundsCache[code];
@@ -876,13 +894,13 @@
                     const rate3 = computeRate(fund.netWorth, 3);
                     const rate5 = computeRate(fund.netWorth, 5);
                     const rate15 = computeRate(fund.netWorth, 15);
+                    const sectorTags = (fund.sectors || []).map(s => `<span class="sector-tag" style="margin-left:4px;">${s}</span>`).join('');
                     listHtml += `
                         <div class="list-row" data-code="${code}">
                             <div class="fund-main">
                                 <span class="fund-title">${fund.name || code}</span>
                                 <span class="fund-code">${code}</span>
-                                <!-- 板块标签简单展示（列表视图暂不加下拉） -->
-                                ${(fund.sectors || []).map(s => `<span class="sector-tag" style="margin-left:4px;">${s}</span>`).join('')}
+                                ${sectorTags}
                             </div>
                             <div class="latest-info">
                                 <span class="date">${latestInfo.date}</span>
@@ -954,6 +972,13 @@
                     openChartModal();
                 }
             });
+        });
+
+        // 点击页面其他区域关闭所有下拉菜单
+        document.addEventListener('click', (e) => {
+            if (!e.target.closest('.sector-selector')) {
+                document.querySelectorAll('.sector-dropdown.active').forEach(d => d.classList.remove('active'));
+            }
         });
     }
 
@@ -1053,7 +1078,6 @@
 
     async function fetchBaiduHoldings(code) {
         const url = `https://gushitong.baidu.com/opendata?resource_id=5803&query=${code}&new_need_di=1&source=qieman`;
-        // 尝试 JSONP
         return new Promise((resolve, reject) => {
             const callbackName = `baidu_holdings_${code}_${Date.now()}`;
             const timeout = setTimeout(() => {
@@ -1114,7 +1138,6 @@
             window[callbackName] = (data) => {
                 try {
                     const html = data?.content || '';
-                    // 简单正则提取表格数据
                     const regex = /<td[^>]*>([^<]+)<\/td>/g;
                     const matches = html.match(/<td[^>]*>([^<]+)<\/td>/g);
                     if (!matches) { cleanup(); reject(new Error('解析失败')); return; }
@@ -1284,7 +1307,6 @@
 
         await loadMasterFundList();
 
-        // 搜索联想
         const searchInput = document.getElementById('fundSearchInput');
         const dropdown = document.getElementById('suggestionDropdown');
         let selectedCode = '';
