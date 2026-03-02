@@ -5,7 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
     <meta name="apple-mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-status-bar-style" content="white">
-    <title>基金看板 · 右侧标记统一</title>
+    <title>基金看板 · 监控历史涨跌幅</title>
     <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
     <script src="https://sdk.amazonaws.com/js/aws-sdk-2.1692.0.min.js"></script>
     <style>
@@ -698,8 +698,8 @@
 <body>
 <div class="container">
     <div class="header">
-        <h1>📈 基金分组看板 <span>右侧标记统一</span></h1>
-        <div class="sub">基金名称完整显示 · 15日最大累计跌幅 · 支持名称搜索</div>
+        <h1>📈 基金分组看板 <span>监控历史涨跌幅</span></h1>
+        <div class="sub">标记15日最大累计跌幅 · 当日最大跌幅</div>
         
         <div class="group-tabs-wrapper">
             <div class="group-tabs" id="groupTabs"></div>
@@ -758,7 +758,7 @@
         <span class="sync-status" id="syncStatus"></span>
     </div>
     <div class="footer-note">
-        ✨ 点击卡片查看曲线 · 右侧板块同步风险标记（黄色！与绿心）
+        ✨ 点击卡片查看曲线
     </div>
 </div>
 
@@ -1591,3 +1591,4 @@
 </script>
 </body>
 </html>
+
