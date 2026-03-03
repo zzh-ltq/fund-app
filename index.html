@@ -16,30 +16,38 @@
         h1 { margin: 0 0 8px; font-size: 1.6rem; font-weight: 600; color: #0b1b32; display: flex; gap: 8px; flex-wrap: wrap; align-items: center; }
         h1 span { background: linear-gradient(135deg, #eef2ff 0%, #dbeafe 100%); color: #1d4ed8; font-size: 0.8rem; padding: 4px 12px; border-radius: 40px; font-weight: 500; }
         .sub { color: #4b587c; margin-bottom: 16px; font-size: 0.85rem; border-left: 3px solid #3b82f6; padding: 8px 16px; background: #fafbff; border-radius: 0 8px 8px 0; line-height: 1.4; }
-        .group-tabs-wrapper { display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 12px; margin: 16px 0; }
-        .group-tabs { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; }
-        .sort-controls { display: flex; gap: 8px; align-items: center; flex-wrap: wrap; }
-        .sort-direction-btn { background: linear-gradient(135deg, #f0f2f8 0%, #e8ecf4 100%); border-radius: 40px; padding: 8px 18px; font-size: 0.85rem; font-weight: 500; color: #2d3a5e; cursor: pointer; border: 1px solid transparent; transition: all 0.2s ease; }
-        .sort-direction-btn.active { background: linear-gradient(135deg, #0b1b32 0%, #1e3a8a 100%); color: white; }
-        .sort-rule-select { padding: 8px 18px; border-radius: 40px; border: 1.5px solid #e1e6f0; background: white; font-size: 0.85rem; min-width: 110px; transition: all 0.2s ease; -webkit-appearance: none; appearance: none; background-image: url("data:image/svg+xml;charset=utf-8,%3Csvg xmlns='http://www.w3.org/2000/svg' width='16' height='16' viewBox='0 0 24 24' fill='none' stroke='%232d3a5e' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M6 9l6 6 6-6'/%3E%3C/svg%3E"); background-repeat: no-repeat; background-position: right 12px center; background-size: 16px; padding-right: 36px; }
-        .view-toggle { display: flex; gap: 4px; background: #f0f2f8; border-radius: 40px; padding: 4px; }
-        .view-btn { background: transparent; border: none; padding: 6px 16px; border-radius: 30px; font-size: 0.85rem; font-weight: 500; color: #2d3a5e; cursor: pointer; transition: all 0.2s ease; }
-        .view-btn.active { background: white; color: #0b1b32; box-shadow: 0 2px 6px rgba(0,0,0,0.05); }
-        .group-tab { background: linear-gradient(135deg, #f0f2f8 0%, #e8ecf4 100%); border-radius: 40px; padding: 8px 18px; font-size: 0.85rem; font-weight: 500; color: #2d3a5e; cursor: pointer; display: flex; align-items: center; gap: 6px; transition: all 0.2s ease; border: 1px solid transparent; }
+        
+        /* ===== 优化的顶部控制区排版 ===== */
+        .group-tabs-wrapper { display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 12px; margin: 12px 0; }
+        .group-tabs { display: flex; flex-wrap: wrap; gap: 6px; align-items: center; }
+        
+        /* 紧凑化标签设计 */
+        .group-tab { background: linear-gradient(135deg, #f0f2f8 0%, #e8ecf4 100%); border-radius: 40px; padding: 5px 12px; font-size: 0.8rem; font-weight: 500; color: #2d3a5e; cursor: pointer; display: flex; align-items: center; gap: 4px; transition: all 0.2s ease; border: 1px solid transparent; white-space: nowrap; }
         .group-tab.active { background: linear-gradient(135deg, #0b1b32 0%, #1e3a8a 100%); color: white; box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1); }
-        .group-tab .warning-badge { background: linear-gradient(135deg, #f97316 0%, #ea580c 100%); color: white; border-radius: 50%; width: 18px; height: 18px; font-size: 12px; display: inline-flex; align-items: center; justify-content: center; font-weight: 600; }
-        .group-tab .green-heart { color: #2e7d5e; font-size: 16px; line-height: 1; }
-        .group-tab .fund-count { background: rgba(255,255,255,0.2); border-radius: 30px; padding: 2px 6px; font-size: 0.7rem; margin-left: 4px; }
-        .group-tab .delete-group { margin-left: 4px; background: none; border: none; color: inherit; font-size: 16px; cursor: pointer; opacity: 0.6; transition: opacity 0.2s; }
-        .group-tab .rename-group { margin-left: 4px; background: none; border: none; color: inherit; font-size: 14px; cursor: pointer; opacity: 0.6; transition: opacity 0.2s; }
-        .group-tab .rename-group:hover { opacity: 1; }
-        .add-group-btn { background: linear-gradient(135deg, #e4e9f5 0%, #d7e0f5 100%); border: none; border-radius: 50%; width: 36px; height: 36px; font-size: 20px; cursor: pointer; color: #2d3a5e; display: flex; align-items: center; justify-content: center; transition: all 0.2s ease; }
+        
+        .group-tab .warning-badge { background: linear-gradient(135deg, #f97316 0%, #ea580c 100%); color: white; border-radius: 50%; width: 15px; height: 15px; font-size: 10px; display: inline-flex; align-items: center; justify-content: center; font-weight: 600; }
+        .group-tab .green-heart { color: #2e7d5e; font-size: 14px; line-height: 1; }
+        .group-tab .fund-count { background: rgba(255,255,255,0.2); border-radius: 30px; padding: 1px 5px; font-size: 0.7rem; margin-left: 2px; }
+        .group-tab .delete-group { margin-left: 2px; background: none; border: none; color: inherit; font-size: 14px; cursor: pointer; opacity: 0.6; transition: opacity 0.2s; padding: 0; }
+        .group-tab .rename-group { margin-left: 0; background: none; border: none; color: inherit; font-size: 12px; cursor: pointer; opacity: 0.6; transition: opacity 0.2s; padding: 0 2px; }
+        .group-tab .rename-group:hover, .group-tab .delete-group:hover { opacity: 1; }
+        
+        .add-group-btn { background: linear-gradient(135deg, #e4e9f5 0%, #d7e0f5 100%); border: none; border-radius: 50%; width: 28px; height: 28px; font-size: 18px; cursor: pointer; color: #2d3a5e; display: flex; align-items: center; justify-content: center; transition: all 0.2s ease; flex-shrink: 0; }
         .add-group-btn:hover { transform: rotate(90deg); background: linear-gradient(135deg, #dbeafe 0%, #bfdbfe 100%); }
         
+        .sort-controls { display: flex; gap: 8px; align-items: center; flex-wrap: wrap; }
+        .sort-direction-btn { background: linear-gradient(135deg, #f0f2f8 0%, #e8ecf4 100%); border-radius: 40px; padding: 6px 14px; font-size: 0.8rem; font-weight: 500; color: #2d3a5e; cursor: pointer; border: 1px solid transparent; transition: all 0.2s ease; }
+        .sort-direction-btn.active { background: linear-gradient(135deg, #0b1b32 0%, #1e3a8a 100%); color: white; }
+        .sort-rule-select { padding: 6px 14px; border-radius: 40px; border: 1.5px solid #e1e6f0; background: white; font-size: 0.8rem; min-width: 90px; transition: all 0.2s ease; -webkit-appearance: none; appearance: none; background-image: url("data:image/svg+xml;charset=utf-8,%3Csvg xmlns='http://www.w3.org/2000/svg' width='14' height='14' viewBox='0 0 24 24' fill='none' stroke='%232d3a5e' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M6 9l6 6 6-6'/%3E%3C/svg%3E"); background-repeat: no-repeat; background-position: right 10px center; background-size: 14px; padding-right: 30px; }
+        .view-toggle { display: flex; gap: 2px; background: #f0f2f8; border-radius: 40px; padding: 3px; }
+        .view-btn { background: transparent; border: none; padding: 5px 14px; border-radius: 30px; font-size: 0.8rem; font-weight: 500; color: #2d3a5e; cursor: pointer; transition: all 0.2s ease; }
+        .view-btn.active { background: white; color: #0b1b32; box-shadow: 0 2px 6px rgba(0,0,0,0.05); }
+        /* ================================== */
+
         .add-area { display: flex; gap: 10px; flex-wrap: wrap; align-items: flex-start; margin-top: 8px; position: relative; }
         .search-wrapper { flex: 2 1 220px; position: relative; }
         .input-wrapper { width: 100%; position: relative; }
-        .input-wrapper input { width: 100%; padding: 14px 18px; border: 1.5px solid #e1e6f0; border-radius: 44px; font-size: 0.9rem; background: white; transition: all 0.2s ease; }
+        .input-wrapper input { width: 100%; padding: 12px 18px; border: 1.5px solid #e1e6f0; border-radius: 44px; font-size: 0.9rem; background: white; transition: all 0.2s ease; }
         .input-wrapper input:focus { outline: none; border-color: #3b82f6; box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1); }
         .suggestion-dropdown { position: absolute; top: calc(100% + 4px); left: 0; right: 0; background: white; border-radius: 18px; box-shadow: 0 6px 20px rgba(0,20,50,0.15); max-height: 280px; overflow-y: auto; z-index: 1000; border: 1px solid #e9ecf5; display: none; }
         .suggestion-dropdown.active { display: block; }
@@ -48,28 +56,32 @@
         .suggestion-name { font-weight: 500; color: #0b1b32; font-size: 0.9rem; max-width: 200px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
         .suggestion-code { font-size: 0.75rem; background: #eef2f9; padding: 3px 8px; border-radius: 30px; color: #4b587c; margin-left: 10px; }
         .suggestion-type { font-size: 0.65rem; color: #8f9fc0; margin-left: 6px; }
-        .group-select { padding: 14px 18px; border-radius: 44px; border: 1.5px solid #e1e6f0; background: white; font-size: 0.9rem; min-width: 110px; transition: all 0.2s ease; -webkit-appearance: none; appearance: none; background-image: url("data:image/svg+xml;charset=utf-8,%3Csvg xmlns='http://www.w3.org/2000/svg' width='16' height='16' viewBox='0 0 24 24' fill='none' stroke='%232d3a5e' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M6 9l6 6 6-6'/%3E%3C/svg%3E"); background-repeat: no-repeat; background-position: right 12px center; background-size: 16px; padding-right: 36px; }
+        .group-select { padding: 12px 18px; border-radius: 44px; border: 1.5px solid #e1e6f0; background: white; font-size: 0.9rem; min-width: 110px; transition: all 0.2s ease; -webkit-appearance: none; appearance: none; background-image: url("data:image/svg+xml;charset=utf-8,%3Csvg xmlns='http://www.w3.org/2000/svg' width='16' height='16' viewBox='0 0 24 24' fill='none' stroke='%232d3a5e' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M6 9l6 6 6-6'/%3E%3C/svg%3E"); background-repeat: no-repeat; background-position: right 12px center; background-size: 16px; padding-right: 36px; }
         
-        .add-btn { background: linear-gradient(135deg, #0b1b32 0%, #1e3a8a 100%); color: white; border: none; padding: 14px 24px; border-radius: 60px; font-size: 0.9rem; font-weight: 500; cursor: pointer; transition: all 0.2s ease; flex: 0 0 auto; }
+        .add-btn { background: linear-gradient(135deg, #0b1b32 0%, #1e3a8a 100%); color: white; border: none; padding: 12px 24px; border-radius: 60px; font-size: 0.9rem; font-weight: 500; cursor: pointer; transition: all 0.2s ease; flex: 0 0 auto; }
 
         .main-dashboard { display: flex; gap: 20px; flex-wrap: wrap; }
         .left-panel { flex: 3; min-width: 300px; }
+        
+        /* ===== 优化的右侧栏排版 ===== */
         .right-panel { flex: 1; min-width: 240px; background: linear-gradient(135deg, #ffffff 0%, #f8faff 100%); border-radius: 28px; padding: 20px 16px; box-shadow: 0 4px 20px rgba(0, 0, 0, 0.03); align-self: start; }
-        .right-panel h3 { margin: 0 0 16px 0; font-size: 1rem; color: #0b1b32; display: flex; justify-content: space-between; align-items: center; }
+        .right-panel h3 { margin: 0 0 12px 0; font-size: 0.9rem; color: #0b1b32; display: flex; justify-content: space-between; align-items: center; }
         .group-summary-sort { background: linear-gradient(135deg, #f0f2f8 0%, #e8ecf4 100%); border-radius: 40px; padding: 4px 8px; font-size: 0.7rem; display: flex; gap: 4px; }
         .group-summary-sort span { cursor: pointer; padding: 2px 8px; border-radius: 20px; transition: background 0.2s; }
         .group-summary-sort span.active { background: white; color: #0b1b32; box-shadow: 0 2px 4px rgba(0,0,0,0.05); }
         .group-summary-list { display: flex; flex-direction: column; gap: 8px; }
-        .group-summary-item { display: flex; justify-content: space-between; align-items: center; padding: 12px 16px; background: linear-gradient(135deg, #f8faff 0%, #eff6ff 100%); border-radius: 20px; cursor: pointer; transition: all 0.2s ease; border: 1px solid transparent; }
+        .group-summary-item { display: flex; justify-content: space-between; align-items: center; padding: 8px 12px; background: linear-gradient(135deg, #f8faff 0%, #eff6ff 100%); border-radius: 16px; cursor: pointer; transition: all 0.2s ease; border: 1px solid transparent; }
         .group-summary-item:hover { transform: translateY(-2px); box-shadow: 0 4px 8px rgba(0,0,0,0.05); }
         .group-summary-item.active { border-color: #3b82f6; background: linear-gradient(135deg, #eef2ff 0%, #dbeafe 100%); }
-        .group-summary-name { font-weight: 500; color: #0b1b32; display: flex; align-items: center; gap: 4px; flex-wrap: wrap; }
+        .group-summary-name { font-size: 0.8rem; font-weight: 500; color: #0b1b32; display: flex; align-items: center; gap: 4px; flex-wrap: wrap; }
         .group-summary-badge { display: inline-flex; align-items: center; gap: 2px; }
-        .group-summary-badge .warning-badge { background: linear-gradient(135deg, #f97316 0%, #ea580c 100%); color: white; border-radius: 50%; width: 18px; height: 18px; font-size: 12px; display: inline-flex; align-items: center; justify-content: center; font-weight: 600; }
-        .group-summary-badge .green-heart { color: #2e7d5e; font-size: 16px; line-height: 1; }
-        .group-summary-value { font-weight: 600; padding: 4px 12px; border-radius: 30px; background: white; }
+        .group-summary-badge .warning-badge { background: linear-gradient(135deg, #f97316 0%, #ea580c 100%); color: white; border-radius: 50%; width: 14px; height: 14px; font-size: 9px; display: inline-flex; align-items: center; justify-content: center; font-weight: 600; }
+        .group-summary-badge .green-heart { color: #2e7d5e; font-size: 12px; line-height: 1; }
+        .group-summary-value { font-size: 0.8rem; font-weight: 600; padding: 2px 8px; border-radius: 30px; background: white; }
         .group-summary-value.positive { color: #ef4444; }
         .group-summary-value.negative { color: #16a34a; }
+        /* ================================== */
+
         .card-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); gap: 16px; }
         .list-view { display: flex; flex-direction: column; gap: 8px; }
         .list-row { background: linear-gradient(135deg, #ffffff 0%, #fafbff 100%); border-radius: 20px; padding: 12px 16px; box-shadow: 0 2px 8px rgba(0, 20, 50, 0.04); cursor: pointer; display: flex; flex-wrap: wrap; align-items: center; gap: 12px; border: 1px solid #f0f4ff; transition: all 0.2s; }
@@ -81,6 +93,7 @@
         .list-row .rates-summary { flex: 2; display: flex; gap: 12px; flex-wrap: wrap; }
         .list-row .rate-item { background: #eef2f9; border-radius: 30px; padding: 4px 10px; font-size: 0.75rem; }
         .list-row .delete-btn { margin-left: auto; }
+        
         .card { background: linear-gradient(135deg, #ffffff 0%, #fafbff 100%); border-radius: 24px; padding: 20px 16px; box-shadow: 0 6px 20px rgba(0, 20, 50, 0.06); cursor: pointer; position: relative; transition: all 0.3s ease; border: 1px solid #f0f4ff; }
         .card.risk-highlight { border: 2px solid #f97316; }
         .card-header { display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 12px; gap: 8px; }
@@ -89,13 +102,11 @@
         .fund-code-wrapper { display: flex; align-items: center; flex-wrap: wrap; gap: 4px; margin-top: 4px; }
         .fund-code { font-size: 0.7rem; background: #eef2f9; padding: 3px 8px; border-radius: 40px; color: #4b587c; display: inline-block; }
         
-        /* 板块下拉新样式 */
         .sector-tag { font-size: 0.65rem; background: #dbeafe; color: #1d4ed8; padding: 3px 8px; border-radius: 30px; display: inline-block; font-weight: 500; margin-right: 4px; cursor: pointer; transition: background 0.2s; }
         .sector-tag:hover { background: #bfdbfe; }
         .add-sector-btn { background: #eef2f9 !important; color: #4b587c !important; border: 1px dashed #b4c0d3; cursor: pointer; }
         .add-sector-btn:hover { background: #e2e8f0 !important; }
         
-        /* 独立板块弹窗 UI */
         .global-sector-dropdown { position: absolute; display: none; background: white; border: 1px solid #e9ecf5; border-radius: 12px; box-shadow: 0 10px 40px rgba(0,0,0,0.15); z-index: 10000; width: 320px; flex-direction: column; overflow: hidden; }
         .global-sector-dropdown.active { display: flex; }
         .sector-dropdown-header { padding: 10px 14px; font-size: 0.85rem; font-weight: 600; color: #4b587c; background: #f8faff; border-bottom: 1px solid #e9ecf5; display: flex; justify-content: space-between; align-items: center; }
@@ -286,7 +297,7 @@
     const DROP_THRESHOLD = -8.5;       // 最大跌幅风险阈值
     const DAILY_RISK_THRESHOLD = -5.0; // 单日下跌风险阈值
     const MAX_HISTORY_POINTS = 120;
-    const MAX_DROP_PERIOD = 20;        // 改为20日最大跌幅计算
+    const MAX_DROP_PERIOD = 20;        // 20日最大跌幅计算
 
     const R2_CONFIG = {
         bucketName: 'fund-list-app',
@@ -304,7 +315,7 @@
     let currentGroupId = 'default';
     let chartInstance = null;
     let currentModalFund = null;
-    let activeSectorFundCode = null; // 当前正在选择板块的基金代码
+    let activeSectorFundCode = null;
 
     let sortDirection = 'desc';
     let sortRule = 'daily';
@@ -408,20 +419,16 @@
         return ((netWorth[netWorth.length-1].y - netWorth[netWorth.length-days].y) / netWorth[netWorth.length-days].y * 100).toFixed(2);
     }
 
-    // 新增：相对于最近交易日当天净值的最大累计跌幅
-    // 逻辑：在过去 days 天内找出一个净值，计算从那天买入跌到最新一天的跌幅，取跌幅最大的（即负数最小的）
+    // 相对于最近交易日当天净值的最大累计跌幅
     function computeMaxDropToLatest(netWorth, days) {
         if (!netWorth || netWorth.length < 2) return null;
         const slice = netWorth.slice(-Math.min(days, netWorth.length));
         const latest = slice[slice.length - 1].y;
         let maxDrop = 0; // 用负数或0表示
         
-        // i 不包含最后一天，因为同一天跌幅是0
         for (let i = 0; i < slice.length - 1; i++) {
             const drop = (latest - slice[i].y) / slice[i].y * 100;
-            if (drop < maxDrop) {
-                maxDrop = drop;
-            }
+            if (drop < maxDrop) maxDrop = drop;
         }
         return maxDrop === 0 ? null : maxDrop.toFixed(2);
     }
@@ -518,12 +525,11 @@
     function has20DayRisk(groupId) {
         const group = appData.groups.find(g => g.id === groupId);
         if (!group) return false;
-        // 修正：default分组也要验证所有基金，实现上层同步标记
+        // Default 也验证
         const codes = groupId === 'default' ? getAllFundCodes() : group.fundCodes;
         return codes.some(code => {
             const cached = appData.fundsCache[code];
             if (!cached || !cached.netWorth) return false;
-            // 修正为：真正的20日相对于最新一天的最大累计跌幅
             const maxDrop = computeMaxDropToLatest(cached.netWorth, MAX_DROP_PERIOD);
             return maxDrop !== null && parseFloat(maxDrop) <= DROP_THRESHOLD;
         });
