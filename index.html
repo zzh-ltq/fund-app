@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
-    <title>基金看板 · 自定义板块与风控管理</title>
+    <title>基金看板 · 自定义板块与拖拽排序</title>
     <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
     <script src="https://sdk.amazonaws.com/js/aws-sdk-2.1692.0.min.js"></script>
     <style>
@@ -17,14 +17,18 @@
         h1 span { background: linear-gradient(135deg, #eef2ff 0%, #dbeafe 100%); color: #1d4ed8; font-size: 0.8rem; padding: 4px 12px; border-radius: 40px; font-weight: 500; }
         .sub { color: #4b587c; margin-bottom: 16px; font-size: 0.85rem; border-left: 3px solid #3b82f6; padding: 8px 16px; background: #fafbff; border-radius: 0 8px 8px 0; line-height: 1.4; }
         
-        /* ===== 优化的顶部控制区排版 ===== */
         .group-tabs-wrapper { display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 12px; margin: 12px 0; }
         .group-tabs { display: flex; flex-wrap: wrap; gap: 6px; align-items: center; }
         
-        /* 紧凑化标签设计 */
-        .group-tab { background: linear-gradient(135deg, #f0f2f8 0%, #e8ecf4 100%); border-radius: 40px; padding: 5px 12px; font-size: 0.8rem; font-weight: 500; color: #2d3a5e; cursor: pointer; display: flex; align-items: center; gap: 4px; transition: all 0.2s ease; border: 1px solid transparent; white-space: nowrap; }
+        .group-tab { background: linear-gradient(135deg, #f0f2f8 0%, #e8ecf4 100%); border-radius: 40px; padding: 5px 12px; font-size: 0.8rem; font-weight: 500; color: #2d3a5e; cursor: pointer; display: flex; align-items: center; gap: 4px; transition: all 0.2s ease; border: 1px dashed transparent; white-space: nowrap; user-select: none; }
         .group-tab.active { background: linear-gradient(135deg, #0b1b32 0%, #1e3a8a 100%); color: white; box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1); }
         
+        /* 拖拽相关样式 */
+        .group-tab[draggable="true"] { cursor: grab; }
+        .group-tab[draggable="true"]:active { cursor: grabbing; }
+        .group-tab.dragging { opacity: 0.5; transform: scale(0.95); }
+        .group-tab.drag-over { border-color: #3b82f6; background: #eef2ff; transform: scale(1.05); color: #1d4ed8; }
+
         .group-tab .warning-badge { background: linear-gradient(135deg, #f97316 0%, #ea580c 100%); color: white; border-radius: 50%; width: 15px; height: 15px; font-size: 10px; display: inline-flex; align-items: center; justify-content: center; font-weight: 600; }
         .group-tab .green-heart { color: #2e7d5e; font-size: 14px; line-height: 1; }
         .group-tab .fund-count { background: rgba(255,255,255,0.2); border-radius: 30px; padding: 1px 5px; font-size: 0.7rem; margin-left: 2px; }
@@ -42,7 +46,6 @@
         .view-toggle { display: flex; gap: 2px; background: #f0f2f8; border-radius: 40px; padding: 3px; }
         .view-btn { background: transparent; border: none; padding: 5px 14px; border-radius: 30px; font-size: 0.8rem; font-weight: 500; color: #2d3a5e; cursor: pointer; transition: all 0.2s ease; }
         .view-btn.active { background: white; color: #0b1b32; box-shadow: 0 2px 6px rgba(0,0,0,0.05); }
-        /* ================================== */
 
         .add-area { display: flex; gap: 10px; flex-wrap: wrap; align-items: flex-start; margin-top: 8px; position: relative; }
         .search-wrapper { flex: 2 1 220px; position: relative; }
@@ -62,8 +65,6 @@
 
         .main-dashboard { display: flex; gap: 20px; flex-wrap: wrap; }
         .left-panel { flex: 3; min-width: 300px; }
-        
-        /* ===== 优化的右侧栏排版 ===== */
         .right-panel { flex: 1; min-width: 240px; background: linear-gradient(135deg, #ffffff 0%, #f8faff 100%); border-radius: 28px; padding: 20px 16px; box-shadow: 0 4px 20px rgba(0, 0, 0, 0.03); align-self: start; }
         .right-panel h3 { margin: 0 0 12px 0; font-size: 0.9rem; color: #0b1b32; display: flex; justify-content: space-between; align-items: center; }
         .group-summary-sort { background: linear-gradient(135deg, #f0f2f8 0%, #e8ecf4 100%); border-radius: 40px; padding: 4px 8px; font-size: 0.7rem; display: flex; gap: 4px; }
@@ -80,8 +81,7 @@
         .group-summary-value { font-size: 0.8rem; font-weight: 600; padding: 2px 8px; border-radius: 30px; background: white; }
         .group-summary-value.positive { color: #ef4444; }
         .group-summary-value.negative { color: #16a34a; }
-        /* ================================== */
-
+        
         .card-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); gap: 16px; }
         .list-view { display: flex; flex-direction: column; gap: 8px; }
         .list-row { background: linear-gradient(135deg, #ffffff 0%, #fafbff 100%); border-radius: 20px; padding: 12px 16px; box-shadow: 0 2px 8px rgba(0, 20, 50, 0.04); cursor: pointer; display: flex; flex-wrap: wrap; align-items: center; gap: 12px; border: 1px solid #f0f4ff; transition: all 0.2s; }
@@ -102,11 +102,13 @@
         .fund-code-wrapper { display: flex; align-items: center; flex-wrap: wrap; gap: 4px; margin-top: 4px; }
         .fund-code { font-size: 0.7rem; background: #eef2f9; padding: 3px 8px; border-radius: 40px; color: #4b587c; display: inline-block; }
         
+        /* 板块下拉新样式 */
         .sector-tag { font-size: 0.65rem; background: #dbeafe; color: #1d4ed8; padding: 3px 8px; border-radius: 30px; display: inline-block; font-weight: 500; margin-right: 4px; cursor: pointer; transition: background 0.2s; }
         .sector-tag:hover { background: #bfdbfe; }
         .add-sector-btn { background: #eef2f9 !important; color: #4b587c !important; border: 1px dashed #b4c0d3; cursor: pointer; }
         .add-sector-btn:hover { background: #e2e8f0 !important; }
         
+        /* 独立板块弹窗 UI */
         .global-sector-dropdown { position: absolute; display: none; background: white; border: 1px solid #e9ecf5; border-radius: 12px; box-shadow: 0 10px 40px rgba(0,0,0,0.15); z-index: 10000; width: 320px; flex-direction: column; overflow: hidden; }
         .global-sector-dropdown.active { display: flex; }
         .sector-dropdown-header { padding: 10px 14px; font-size: 0.85rem; font-weight: 600; color: #4b587c; background: #f8faff; border-bottom: 1px solid #e9ecf5; display: flex; justify-content: space-between; align-items: center; }
@@ -188,8 +190,8 @@
 <body>
 <div class="container">
     <div class="header">
-        <h1>📈 基金分组看板 <span>自定义板块与风控</span></h1>
-        <div class="sub">基金名称完整显示 · 20日最大累计跌幅风险提示 · 自由创建所属板块</div>
+        <h1>📈 基金分组看板 <span>自定义板块与排序</span></h1>
+        <div class="sub">基金名称完整显示 · 20日最大累计跌幅风险提示 · 拖拽调整分组顺序</div>
         
         <div class="group-tabs-wrapper">
             <div class="group-tabs" id="groupTabs"></div>
@@ -248,7 +250,7 @@
         <span class="sync-status" id="syncStatus"></span>
     </div>
     <div class="footer-note">
-        ✨ 点击卡片查看曲线及股票持仓明细 · 点击板块标签可修改多选
+        ✨ 拖动上方分组卡片可以排序 · 点击卡片查看曲线明细
     </div>
 </div>
 
@@ -419,12 +421,11 @@
         return ((netWorth[netWorth.length-1].y - netWorth[netWorth.length-days].y) / netWorth[netWorth.length-days].y * 100).toFixed(2);
     }
 
-    // 相对于最近交易日当天净值的最大累计跌幅
     function computeMaxDropToLatest(netWorth, days) {
         if (!netWorth || netWorth.length < 2) return null;
         const slice = netWorth.slice(-Math.min(days, netWorth.length));
         const latest = slice[slice.length - 1].y;
-        let maxDrop = 0; // 用负数或0表示
+        let maxDrop = 0; 
         
         for (let i = 0; i < slice.length - 1; i++) {
             const drop = (latest - slice[i].y) / slice[i].y * 100;
@@ -506,7 +507,7 @@
         await s3.putObject({ Bucket: R2_CONFIG.bucketName, Key: 'funds_app_data_v3.json', Body: JSON.stringify(data), ContentType: 'application/json' }).promise();
     }
 
-    // ========== 分组平均值及风险标记 (核心逻辑修正) ==========
+    // ========== 分组平均值及风险标记 ==========
     function calculateGroupAvgChange(groupId) {
         const group = appData.groups.find(g => g.id === groupId);
         if (!group || group.id === 'default') return null;
@@ -525,7 +526,6 @@
     function has20DayRisk(groupId) {
         const group = appData.groups.find(g => g.id === groupId);
         if (!group) return false;
-        // Default 也验证
         const codes = groupId === 'default' ? getAllFundCodes() : group.fundCodes;
         return codes.some(code => {
             const cached = appData.fundsCache[code];
@@ -592,7 +592,10 @@
         });
     }
 
-    // ========== 分组渲染（带重命名按钮） ==========
+    // ========== 拖拽排序逻辑变量 ==========
+    let draggedGroupId = null;
+
+    // ========== 分组渲染（带重命名与拖拽） ==========
     function renderGroups() {
         const tabsContainer = document.getElementById('groupTabs');
         const groupSelect = document.getElementById('groupSelect');
@@ -602,7 +605,7 @@
         
         appData.groups.forEach(group => {
             const isDefault = group.id === 'default';
-            const has20 = has20DayRisk(group.id); // Default 也验证
+            const has20 = has20DayRisk(group.id); 
             const hasDaily = hasDailyRisk(group.id);
             const fundCount = group.fundCodes.length;
             const activeClass = group.id === currentGroupId ? 'active' : '';
@@ -612,7 +615,10 @@
             const deleteBtn = isDefault ? '' : `<button class="delete-group" data-group-id="${group.id}">✕</button>`;
             const renameBtn = isDefault ? '' : `<button class="rename-group" data-group-id="${group.id}" title="重命名">✏️</button>`;
             
-            tabsHtml += `<div class="group-tab ${activeClass}" data-group-id="${group.id}">${group.name} ${countSpan} ${warningBadge} ${greenHeart} ${deleteBtn} ${renameBtn}</div>`;
+            // 只有非默认分组允许拖拽
+            const draggableAttr = isDefault ? '' : 'draggable="true"';
+            
+            tabsHtml += `<div class="group-tab ${activeClass}" data-group-id="${group.id}" ${draggableAttr}>${group.name} ${countSpan} ${warningBadge} ${greenHeart} ${deleteBtn} ${renameBtn}</div>`;
             if (!isDefault) {
                 nonDefaultGroups.push(group);
                 optionsHtml += `<option value="${group.id}">${group.name}</option>`;
@@ -630,6 +636,7 @@
             }
         }
 
+        // 绑定点击事件（排除内部按钮与拖动时的误触发）
         document.querySelectorAll('.group-tab[data-group-id]').forEach(el => {
             el.addEventListener('click', (e) => {
                 if (e.target.classList.contains('delete-group') || e.target.classList.contains('rename-group')) return;
@@ -678,6 +685,55 @@
                 saveAppData(); renderGroups(); renderGroupSummaryPanel();
                 showToast('分组创建成功');
             }
+        });
+
+        // 绑定拖拽排序事件
+        const draggableTabs = document.querySelectorAll('.group-tab[draggable="true"]');
+        draggableTabs.forEach(tab => {
+            tab.addEventListener('dragstart', function(e) {
+                draggedGroupId = this.dataset.groupId;
+                e.dataTransfer.effectAllowed = 'move';
+                e.dataTransfer.setData('text/plain', draggedGroupId);
+                setTimeout(() => this.classList.add('dragging'), 0);
+            });
+
+            tab.addEventListener('dragover', function(e) {
+                e.preventDefault(); 
+                e.dataTransfer.dropEffect = 'move';
+                if (draggedGroupId && draggedGroupId !== this.dataset.groupId && this.dataset.groupId !== 'default') {
+                    this.classList.add('drag-over');
+                }
+            });
+
+            tab.addEventListener('dragleave', function(e) {
+                this.classList.remove('drag-over');
+            });
+
+            tab.addEventListener('drop', function(e) {
+                e.stopPropagation();
+                this.classList.remove('drag-over');
+                const targetGroupId = this.dataset.groupId;
+                if (targetGroupId === 'default') return; // 不允许插到 default 的位置
+                
+                if (draggedGroupId && draggedGroupId !== targetGroupId) {
+                    const srcIdx = appData.groups.findIndex(g => g.id === draggedGroupId);
+                    const targetIdx = appData.groups.findIndex(g => g.id === targetGroupId);
+                    
+                    if (srcIdx > -1 && targetIdx > -1) {
+                        const [movedItem] = appData.groups.splice(srcIdx, 1);
+                        appData.groups.splice(targetIdx, 0, movedItem);
+                        saveAppData();
+                        renderGroups();
+                    }
+                }
+                draggedGroupId = null;
+            });
+
+            tab.addEventListener('dragend', function(e) {
+                this.classList.remove('dragging');
+                document.querySelectorAll('.group-tab').forEach(t => t.classList.remove('drag-over'));
+                draggedGroupId = null;
+            });
         });
     }
 
