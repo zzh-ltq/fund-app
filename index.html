@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
-    <title>基金看板 · 实时估值与自定义板块</title>
+    <title>基金看板 · 自定义板块与风控管理</title>
     <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
     <script src="https://sdk.amazonaws.com/js/aws-sdk-2.1692.0.min.js"></script>
     <style>
@@ -51,8 +51,6 @@
         .group-select { padding: 14px 18px; border-radius: 44px; border: 1.5px solid #e1e6f0; background: white; font-size: 0.9rem; min-width: 110px; transition: all 0.2s ease; -webkit-appearance: none; appearance: none; background-image: url("data:image/svg+xml;charset=utf-8,%3Csvg xmlns='http://www.w3.org/2000/svg' width='16' height='16' viewBox='0 0 24 24' fill='none' stroke='%232d3a5e' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M6 9l6 6 6-6'/%3E%3C/svg%3E"); background-repeat: no-repeat; background-position: right 12px center; background-size: 16px; padding-right: 36px; }
         
         .add-btn { background: linear-gradient(135deg, #0b1b32 0%, #1e3a8a 100%); color: white; border: none; padding: 14px 24px; border-radius: 60px; font-size: 0.9rem; font-weight: 500; cursor: pointer; transition: all 0.2s ease; flex: 0 0 auto; }
-        .refresh-btn { background: linear-gradient(135deg, #10b981 0%, #059669 100%); color: white; border: none; padding: 14px 24px; border-radius: 60px; font-size: 0.9rem; font-weight: 500; cursor: pointer; transition: all 0.2s ease; flex: 0 0 auto; box-shadow: 0 4px 12px rgba(16, 185, 129, 0.2); }
-        .refresh-btn:hover { transform: translateY(-2px); box-shadow: 0 6px 16px rgba(16, 185, 129, 0.3); }
 
         .main-dashboard { display: flex; gap: 20px; flex-wrap: wrap; }
         .left-panel { flex: 3; min-width: 300px; }
@@ -179,8 +177,8 @@
 <body>
 <div class="container">
     <div class="header">
-        <h1>📈 基金分组看板 <span>实时估值与自定义板块</span></h1>
-        <div class="sub">基金名称完整显示 · 盘中实时估值 · 15日最大回撤风险提示 · 自由创建所属板块</div>
+        <h1>📈 基金分组看板 <span>自定义板块与风控</span></h1>
+        <div class="sub">基金名称完整显示 · 20日最大累计跌幅风险提示 · 自由创建所属板块</div>
         
         <div class="group-tabs-wrapper">
             <div class="group-tabs" id="groupTabs"></div>
@@ -202,7 +200,7 @@
             </div>
         </div>
 
-        <!-- 添加区域与更新按钮 -->
+        <!-- 添加区域 -->
         <div class="add-area">
             <div class="search-wrapper">
                 <div class="input-wrapper">
@@ -212,7 +210,6 @@
             </div>
             <select id="groupSelect" class="group-select"></select>
             <button class="add-btn" id="addFundBtn">➕ 添加</button>
-            <button class="refresh-btn" id="refreshEstimateBtn">🔄 更新实时估值</button>
         </div>
     </div>
 
@@ -286,10 +283,10 @@
     // ========== 核心配置 ==========
     const STORAGE_KEY = 'funds_app_data_v3';
     const PERIODS =[3, 5, 7, 10, 15, 20];
-    const DROP_THRESHOLD = -8.5;       // 最大回撤风险阈值
+    const DROP_THRESHOLD = -8.5;       // 最大跌幅风险阈值
     const DAILY_RISK_THRESHOLD = -5.0; // 单日下跌风险阈值
     const MAX_HISTORY_POINTS = 120;
-    const MAX_DROP_PERIOD = 15;
+    const MAX_DROP_PERIOD = 20;        // 改为20日最大跌幅计算
 
     const R2_CONFIG = {
         bucketName: 'fund-list-app',
@@ -411,18 +408,20 @@
         return ((netWorth[netWorth.length-1].y - netWorth[netWorth.length-days].y) / netWorth[netWorth.length-days].y * 100).toFixed(2);
     }
 
-    // 真正的区间最大回撤 (Max Drawdown)
-    function computeMaxDrawdown(netWorth, days) {
-        if (!netWorth || netWorth.length === 0) return null;
+    // 新增：相对于最近交易日当天净值的最大累计跌幅
+    // 逻辑：在过去 days 天内找出一个净值，计算从那天买入跌到最新一天的跌幅，取跌幅最大的（即负数最小的）
+    function computeMaxDropToLatest(netWorth, days) {
+        if (!netWorth || netWorth.length < 2) return null;
         const slice = netWorth.slice(-Math.min(days, netWorth.length));
+        const latest = slice[slice.length - 1].y;
         let maxDrop = 0; // 用负数或0表示
-        let peak = slice[0].y;
-        for (let i = 1; i < slice.length; i++) {
-            if (slice[i].y > peak) {
-                peak = slice[i].y;
+        
+        // i 不包含最后一天，因为同一天跌幅是0
+        for (let i = 0; i < slice.length - 1; i++) {
+            const drop = (latest - slice[i].y) / slice[i].y * 100;
+            if (drop < maxDrop) {
+                maxDrop = drop;
             }
-            const drop = (slice[i].y - peak) / peak * 100;
-            if (drop < maxDrop) maxDrop = drop;
         }
         return maxDrop === 0 ? null : maxDrop.toFixed(2);
     }
@@ -516,7 +515,7 @@
         return count === 0 ? null : (sum / count).toFixed(2);
     }
 
-    function has15DayRisk(groupId) {
+    function has20DayRisk(groupId) {
         const group = appData.groups.find(g => g.id === groupId);
         if (!group) return false;
         // 修正：default分组也要验证所有基金，实现上层同步标记
@@ -524,8 +523,8 @@
         return codes.some(code => {
             const cached = appData.fundsCache[code];
             if (!cached || !cached.netWorth) return false;
-            // 修正为：真正的15日区间最大累计回撤算法
-            const maxDrop = computeMaxDrawdown(cached.netWorth, MAX_DROP_PERIOD);
+            // 修正为：真正的20日相对于最新一天的最大累计跌幅
+            const maxDrop = computeMaxDropToLatest(cached.netWorth, MAX_DROP_PERIOD);
             return maxDrop !== null && parseFloat(maxDrop) <= DROP_THRESHOLD;
         });
     }
@@ -549,9 +548,9 @@
         const groups = appData.groups.filter(g => g.id !== 'default');
         const items = groups.map(g => {
             const avg = calculateGroupAvgChange(g.id);
-            const has15 = has15DayRisk(g.id);
+            const has20 = has20DayRisk(g.id);
             const hasDaily = hasDailyRisk(g.id);
-            return { id: g.id, name: g.name, avg, has15, hasDaily };
+            return { id: g.id, name: g.name, avg, has20, hasDaily };
         }).filter(item => item.avg !== null);
         
         items.sort((a,b) => {
@@ -565,7 +564,7 @@
             const activeClass = item.id === currentGroupId ? 'active' : '';
             const valueClass = parseFloat(item.avg) >= 0 ? 'positive' : 'negative';
             let badgeHtml = '';
-            if (item.has15) badgeHtml += '<span class="warning-badge" title="组内包含15日大跌基金">!</span>';
+            if (item.has20) badgeHtml += '<span class="warning-badge" title="组内包含20日大跌基金">!</span>';
             if (item.hasDaily) badgeHtml += '<span class="green-heart" title="组内包含单日大跌基金">💚</span>';
             if (badgeHtml) badgeHtml = `<span class="group-summary-badge">${badgeHtml}</span>`;
             
@@ -597,11 +596,11 @@
         
         appData.groups.forEach(group => {
             const isDefault = group.id === 'default';
-            const has15 = has15DayRisk(group.id); // Default 也验证
+            const has20 = has20DayRisk(group.id); // Default 也验证
             const hasDaily = hasDailyRisk(group.id);
             const fundCount = group.fundCodes.length;
             const activeClass = group.id === currentGroupId ? 'active' : '';
-            const warningBadge = has15 ? '<span class="warning-badge" title="组内包含15日大跌基金">!</span>' : '';
+            const warningBadge = has20 ? '<span class="warning-badge" title="组内包含20日大跌基金">!</span>' : '';
             const greenHeart = hasDaily ? '<span class="green-heart" title="组内包含单日大跌基金">💚</span>' : '';
             const countSpan = `<span class="fund-count">${fundCount}</span>`;
             const deleteBtn = isDefault ? '' : `<button class="delete-group" data-group-id="${group.id}">✕</button>`;
@@ -843,9 +842,9 @@
                 const fund = appData.fundsCache[code];
                 if (fund && !fund.error && fund.netWorth) {
                     const latestInfo = getLatestInfo(fund.netWorth);
-                    const maxDropIn15 = computeMaxDrawdown(fund.netWorth, MAX_DROP_PERIOD);
+                    const maxDropIn20 = computeMaxDropToLatest(fund.netWorth, MAX_DROP_PERIOD);
                     
-                    const isRisk = maxDropIn15 !== null && parseFloat(maxDropIn15) <= DROP_THRESHOLD;
+                    const isRisk = maxDropIn20 !== null && parseFloat(maxDropIn20) <= DROP_THRESHOLD;
                     const isDailyRisk = latestInfo.change !== null && parseFloat(latestInfo.change) <= DAILY_RISK_THRESHOLD;
                     
                     let ratesHtml = '';
@@ -856,28 +855,9 @@
                     });
 
                     const changeClass = latestInfo.change !== null ? (parseFloat(latestInfo.change) >= 0 ? 'positive' : 'negative') : '';
-                    const riskTag = isRisk ? '<span class="risk-tag">15日最大回撤</span>' : '';
+                    const riskTag = isRisk ? '<span class="risk-tag">20日跌幅大</span>' : '';
                     const dailyRiskTag = isDailyRisk ? '<span class="daily-risk-tag">当日大跌</span>' : '';
-                    const maxDropTag = maxDropIn15 ? `<span class="maxdrop-tag">15日回撤 ${maxDropIn15}%</span>` : '';
-                    
-                    // 实时估值区域
-                    let estimateHtml = '';
-                    if (fund.estimate) {
-                        const estChg = parseFloat(fund.estimate.gszzl);
-                        const estClass = estChg >= 0 ? 'positive' : 'negative';
-                        const timeStr = fund.estimate.gztime ? fund.estimate.gztime.substring(5, 16) : '--';
-                        estimateHtml = `
-                        <div style="background: linear-gradient(135deg, #fdfbfb 0%, #ebedee 100%); border-radius: 12px; padding: 10px 14px; margin-bottom: 12px; border: 1px dashed #d1d5db; display: flex; justify-content: space-between; align-items: center;">
-                            <div style="display: flex; flex-direction: column; gap: 4px;">
-                                <span style="font-size: 0.7rem; color: #6b7280; font-weight: 600;">盘中估值</span>
-                                <span style="font-size: 0.65rem; color: #9ca3af;">更新: ${timeStr}</span>
-                            </div>
-                            <div style="display: flex; flex-direction: column; align-items: flex-end; gap: 4px;">
-                                <span style="font-size: 0.95rem; font-weight: 700; color: #111827;">${fund.estimate.gsz || '--'}</span>
-                                <span class="${estClass}" style="font-size: 0.85rem; font-weight: 700;">${estChg > 0 ? '+' : ''}${fund.estimate.gszzl}%</span>
-                            </div>
-                        </div>`;
-                    }
+                    const maxDropTag = maxDropIn20 ? `<span class="maxdrop-tag">20日跌幅 ${maxDropIn20}%</span>` : '';
 
                     cardsHtml += `
                         <div class="card ${isRisk ? 'risk-highlight' : ''}" data-code="${code}">
@@ -890,8 +870,6 @@
                                 </div>
                                 <button class="delete-btn" data-code="${code}">✕</button>
                             </div>
-                            
-                            ${estimateHtml}
 
                             <div class="latest-info">
                                 <span class="date">${latestInfo.date} (净值)</span>
@@ -935,22 +913,6 @@
                     const rate3 = computeRate(fund.netWorth, 3);
                     const rate5 = computeRate(fund.netWorth, 5);
                     const rate15 = computeRate(fund.netWorth, 15);
-                    
-                    let estimateHtml = '';
-                    if (fund.estimate) {
-                        const estChg = parseFloat(fund.estimate.gszzl);
-                        const estClass = estChg >= 0 ? 'positive' : 'negative';
-                        const timeStr = fund.estimate.gztime ? fund.estimate.gztime.substring(11, 16) : '--';
-                        estimateHtml = `
-                        <div style="flex: 1; min-width: 110px; display: flex; flex-direction: column; align-items: flex-end; padding-right: 16px; border-right: 1px dashed #e1e6f0;">
-                            <span style="font-size: 0.65rem; color: #9ca3af; margin-bottom: 2px;">盘中估值 ${timeStr}</span>
-                            <div style="display: flex; gap: 8px; align-items: baseline;">
-                                <span style="font-size: 0.85rem; font-weight: 700; color: #111827;">${fund.estimate.gsz}</span>
-                                <span class="${estClass}" style="font-size: 0.85rem; font-weight: 700;">${estChg > 0 ? '+' : ''}${fund.estimate.gszzl}%</span>
-                            </div>
-                        </div>
-                        `;
-                    }
 
                     listHtml += `
                         <div class="list-row" data-code="${code}">
@@ -958,8 +920,6 @@
                                 <span class="fund-title">${fund.name || code}</span>
                                 <span class="fund-code">${code}</span>
                             </div>
-                            
-                            ${estimateHtml}
 
                             <div class="latest-info" style="margin-left: 12px; background: transparent;">
                                 <span class="date">${latestInfo.date}</span>
@@ -1029,57 +989,6 @@
         });
     }
 
-    // ========== 实时估值获取 ==========
-    function fetchRealtimeEstimate(code) {
-        return new Promise((resolve) => {
-            const cbName = `jsonpgz_${Date.now()}_${Math.random().toString(16).slice(2)}`;
-            const script = document.createElement('script');
-            const timeout = setTimeout(() => { cleanup(); resolve(null); }, 3000);
-            const cleanup = () => {
-                clearTimeout(timeout);
-                try { delete window[cbName]; } catch { window[cbName] = undefined; }
-                if (script.parentNode) script.parentNode.removeChild(script);
-            };
-            window[cbName] = (data) => { cleanup(); resolve(data); };
-            script.onerror = () => { cleanup(); resolve(null); };
-            script.src = `https://fundgz.1234567.com.cn/js/${code}.js?rt=${Date.now()}`;
-            document.head.appendChild(script);
-        });
-    }
-
-    // ========== 手动更新全部估值 ==========
-    document.getElementById('refreshEstimateBtn')?.addEventListener('click', async function() {
-        this.textContent = '更新中...';
-        this.disabled = true;
-        this.style.opacity = 0.7;
-
-        const currentGroup = appData.groups.find(g => g.id === currentGroupId);
-        const codesToUpdate = currentGroupId === 'default' ? getAllFundCodes() : (currentGroup ? currentGroup.fundCodes :[]);
-        
-        if (codesToUpdate.length === 0) {
-            showToast('当前没有需要更新的基金');
-        } else {
-            const promises = codesToUpdate.map(async code => {
-                const estimate = await fetchRealtimeEstimate(code);
-                if (estimate && appData.fundsCache[code]) {
-                    appData.fundsCache[code].estimate = {
-                        gsz: estimate.gsz,
-                        gszzl: estimate.gszzl,
-                        gztime: estimate.gztime
-                    };
-                }
-            });
-            await Promise.all(promises);
-            saveAppData();
-            renderCards();
-            showToast('实时估值更新完成');
-        }
-        
-        this.textContent = '🔄 更新实时估值';
-        this.disabled = false;
-        this.style.opacity = 1;
-    });
-
     // ========== 基金数据加载 ==========
     async function loadFundData(code, forceRefresh = false) {
         if (!forceRefresh && appData.fundsCache[code]?.netWorth) {
@@ -1114,12 +1023,6 @@
 
                     if (netWorth && netWorth.length > 0) {
                         const fundInfo = { code, name, netWorth, error: false, manager, asset, stock, sectors: appData.fundsCache[code]?.sectors ||[] };
-                        
-                        const estimate = await fetchRealtimeEstimate(code);
-                        if (estimate) {
-                            fundInfo.estimate = { gsz: estimate.gsz, gszzl: estimate.gszzl, gztime: estimate.gztime };
-                        }
-
                         appData.fundsCache[code] = fundInfo;
                         
                         if (!isLikelyNoStockHoldingsFund(name)) {
