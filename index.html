@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
-    <title>基金看板 · 手动更新与风控管理</title>
+    <title>基金看板 · 自定义板块与风控管理</title>
     <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
     <script src="https://sdk.amazonaws.com/js/aws-sdk-2.1692.0.min.js"></script>
     <style>
@@ -62,6 +62,8 @@
         .group-select { padding: 12px 18px; border-radius: 44px; border: 1.5px solid #e1e6f0; background: white; font-size: 0.9rem; min-width: 110px; transition: all 0.2s ease; -webkit-appearance: none; appearance: none; background-image: url("data:image/svg+xml;charset=utf-8,%3Csvg xmlns='http://www.w3.org/2000/svg' width='16' height='16' viewBox='0 0 24 24' fill='none' stroke='%232d3a5e' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M6 9l6 6 6-6'/%3E%3C/svg%3E"); background-repeat: no-repeat; background-position: right 12px center; background-size: 16px; padding-right: 36px; }
         
         .add-btn { background: linear-gradient(135deg, #0b1b32 0%, #1e3a8a 100%); color: white; border: none; padding: 12px 24px; border-radius: 60px; font-size: 0.9rem; font-weight: 500; cursor: pointer; transition: all 0.2s ease; flex: 0 0 auto; }
+        
+        /* 更新最新净值按钮样式 */
         .refresh-btn { background: linear-gradient(135deg, #10b981 0%, #059669 100%); color: white; border: none; padding: 12px 24px; border-radius: 60px; font-size: 0.9rem; font-weight: 500; cursor: pointer; transition: all 0.2s ease; flex: 0 0 auto; box-shadow: 0 4px 12px rgba(16, 185, 129, 0.2); }
         .refresh-btn:hover { transform: translateY(-2px); box-shadow: 0 6px 16px rgba(16, 185, 129, 0.3); }
         .refresh-btn:disabled { opacity: 0.6; cursor: not-allowed; transform: none; box-shadow: none; }
@@ -69,7 +71,6 @@
         .main-dashboard { display: flex; gap: 20px; flex-wrap: wrap; }
         .left-panel { flex: 3; min-width: 300px; }
         
-        /* ===== 优化的右侧栏排版 ===== */
         .right-panel { flex: 1; min-width: 240px; background: linear-gradient(135deg, #ffffff 0%, #f8faff 100%); border-radius: 28px; padding: 20px 16px; box-shadow: 0 4px 20px rgba(0, 0, 0, 0.03); align-self: start; }
         .right-panel h3 { margin: 0 0 12px 0; font-size: 0.9rem; color: #0b1b32; display: flex; justify-content: space-between; align-items: center; }
         .group-summary-sort { background: linear-gradient(135deg, #f0f2f8 0%, #e8ecf4 100%); border-radius: 40px; padding: 4px 8px; font-size: 0.7rem; display: flex; gap: 4px; }
@@ -86,8 +87,7 @@
         .group-summary-value { font-size: 0.8rem; font-weight: 600; padding: 2px 8px; border-radius: 30px; background: white; }
         .group-summary-value.positive { color: #ef4444; }
         .group-summary-value.negative { color: #16a34a; }
-        /* ================================== */
-
+        
         .card-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); gap: 16px; }
         .list-view { display: flex; flex-direction: column; gap: 8px; }
         .list-row { background: linear-gradient(135deg, #ffffff 0%, #fafbff 100%); border-radius: 20px; padding: 12px 16px; box-shadow: 0 2px 8px rgba(0, 20, 50, 0.04); cursor: pointer; display: flex; flex-wrap: wrap; align-items: center; gap: 12px; border: 1px solid #f0f4ff; transition: all 0.2s; }
@@ -108,13 +108,11 @@
         .fund-code-wrapper { display: flex; align-items: center; flex-wrap: wrap; gap: 4px; margin-top: 4px; }
         .fund-code { font-size: 0.7rem; background: #eef2f9; padding: 3px 8px; border-radius: 40px; color: #4b587c; display: inline-block; }
         
-        /* 板块下拉新样式 */
         .sector-tag { font-size: 0.65rem; background: #dbeafe; color: #1d4ed8; padding: 3px 8px; border-radius: 30px; display: inline-block; font-weight: 500; margin-right: 4px; cursor: pointer; transition: background 0.2s; }
         .sector-tag:hover { background: #bfdbfe; }
         .add-sector-btn { background: #eef2f9 !important; color: #4b587c !important; border: 1px dashed #b4c0d3; cursor: pointer; }
         .add-sector-btn:hover { background: #e2e8f0 !important; }
         
-        /* 独立板块弹窗 UI */
         .global-sector-dropdown { position: absolute; display: none; background: white; border: 1px solid #e9ecf5; border-radius: 12px; box-shadow: 0 10px 40px rgba(0,0,0,0.15); z-index: 10000; width: 320px; flex-direction: column; overflow: hidden; }
         .global-sector-dropdown.active { display: flex; }
         .sector-dropdown-header { padding: 10px 14px; font-size: 0.85rem; font-weight: 600; color: #4b587c; background: #f8faff; border-bottom: 1px solid #e9ecf5; display: flex; justify-content: space-between; align-items: center; }
@@ -1071,8 +1069,8 @@
             script.charset = 'utf-8';
             const timeoutId = setTimeout(() => { 
                 script.remove(); 
-                reject(new Error('超时')); 
                 if (!skipRender) updateCardError(code); 
+                reject(new Error('超时')); 
             }, 10000);
 
             script.onload = async () => {
@@ -1105,23 +1103,23 @@
                             appData.fundsCache[code].holdings =[];
                         }
                         
-                        resolve(fundInfo);
                         if (!skipRender) {
                             renderCards();
                             renderGroupSummaryPanel();
                         }
+                        resolve(fundInfo);
                     } else {
-                        reject(new Error('无净值'));
                         if (!skipRender) updateCardError(code);
+                        reject(new Error('无净值'));
                     }
-                }, 200);
+                }, 50);
             };
             script.onerror = () => { 
                 clearTimeout(timeoutId); 
                 GLOBAL_KEYS.forEach(key => delete window[key]); 
                 script.remove(); 
-                reject(new Error('网络错误')); 
                 if (!skipRender) updateCardError(code); 
+                reject(new Error('网络错误')); 
             };
             document.head.appendChild(script);
         });
@@ -1139,23 +1137,26 @@
         this.innerHTML = '⏳ 更新中...';
         
         try {
-            // 获取当前选中的分组需要更新的基金列表
-            const currentGroup = appData.groups.find(g => g.id === currentGroupId);
-            const codesToUpdate = currentGroupId === 'default' ? getAllFundCodes() : [...currentGroup.fundCodes];
+            const codesToUpdate = getAllFundCodes();
             
             if (codesToUpdate.length === 0) {
                 showToast('当前没有需要更新的基金');
                 return;
             }
 
-            // 批量强制拉取数据，并传入 skipRender = true，防止每拉取一个就刷新一次DOM造成卡顿
-            const promises = codesToUpdate.map(code => loadFundData(code, true, true));
-            await Promise.allSettled(promises); 
+            // 【关键修复】使用串行拉取 (for...of) ，避免东财 pingzhongdata 接口全局变量相互覆盖导致数据张冠李戴
+            for (const code of codesToUpdate) {
+                try {
+                    await loadFundData(code, true, true);
+                } catch(e) {
+                    console.warn(`更新基金 ${code} 失败`, e);
+                }
+            }
             
             saveAppData();
             renderCards();
             renderGroupSummaryPanel();
-            showToast('当前分组数据已更新至最新');
+            showToast('所有基金数据已更新至最新');
         } catch(e) {
             console.error(e);
             showToast('更新过程发生异常');
@@ -1492,6 +1493,8 @@
                 }
             } catch (e) { console.warn('Cloud load failed', e); }
         }
+        
+        // 首次初始化，串行加载，避免错乱
         const allCodes = getAllFundCodes();
         for (const code of allCodes) {
             try { await loadFundData(code); } catch (e) { console.warn(`Load ${code} failed`, e); }
