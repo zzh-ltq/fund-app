@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
-    <title>基金看板 · 自定义板块与拖拽排序</title>
+    <title>基金看板 · 手动更新与风控管理</title>
     <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
     <script src="https://sdk.amazonaws.com/js/aws-sdk-2.1692.0.min.js"></script>
     <style>
@@ -62,9 +62,14 @@
         .group-select { padding: 12px 18px; border-radius: 44px; border: 1.5px solid #e1e6f0; background: white; font-size: 0.9rem; min-width: 110px; transition: all 0.2s ease; -webkit-appearance: none; appearance: none; background-image: url("data:image/svg+xml;charset=utf-8,%3Csvg xmlns='http://www.w3.org/2000/svg' width='16' height='16' viewBox='0 0 24 24' fill='none' stroke='%232d3a5e' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M6 9l6 6 6-6'/%3E%3C/svg%3E"); background-repeat: no-repeat; background-position: right 12px center; background-size: 16px; padding-right: 36px; }
         
         .add-btn { background: linear-gradient(135deg, #0b1b32 0%, #1e3a8a 100%); color: white; border: none; padding: 12px 24px; border-radius: 60px; font-size: 0.9rem; font-weight: 500; cursor: pointer; transition: all 0.2s ease; flex: 0 0 auto; }
+        .refresh-btn { background: linear-gradient(135deg, #10b981 0%, #059669 100%); color: white; border: none; padding: 12px 24px; border-radius: 60px; font-size: 0.9rem; font-weight: 500; cursor: pointer; transition: all 0.2s ease; flex: 0 0 auto; box-shadow: 0 4px 12px rgba(16, 185, 129, 0.2); }
+        .refresh-btn:hover { transform: translateY(-2px); box-shadow: 0 6px 16px rgba(16, 185, 129, 0.3); }
+        .refresh-btn:disabled { opacity: 0.6; cursor: not-allowed; transform: none; box-shadow: none; }
 
         .main-dashboard { display: flex; gap: 20px; flex-wrap: wrap; }
         .left-panel { flex: 3; min-width: 300px; }
+        
+        /* ===== 优化的右侧栏排版 ===== */
         .right-panel { flex: 1; min-width: 240px; background: linear-gradient(135deg, #ffffff 0%, #f8faff 100%); border-radius: 28px; padding: 20px 16px; box-shadow: 0 4px 20px rgba(0, 0, 0, 0.03); align-self: start; }
         .right-panel h3 { margin: 0 0 12px 0; font-size: 0.9rem; color: #0b1b32; display: flex; justify-content: space-between; align-items: center; }
         .group-summary-sort { background: linear-gradient(135deg, #f0f2f8 0%, #e8ecf4 100%); border-radius: 40px; padding: 4px 8px; font-size: 0.7rem; display: flex; gap: 4px; }
@@ -81,7 +86,8 @@
         .group-summary-value { font-size: 0.8rem; font-weight: 600; padding: 2px 8px; border-radius: 30px; background: white; }
         .group-summary-value.positive { color: #ef4444; }
         .group-summary-value.negative { color: #16a34a; }
-        
+        /* ================================== */
+
         .card-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); gap: 16px; }
         .list-view { display: flex; flex-direction: column; gap: 8px; }
         .list-row { background: linear-gradient(135deg, #ffffff 0%, #fafbff 100%); border-radius: 20px; padding: 12px 16px; box-shadow: 0 2px 8px rgba(0, 20, 50, 0.04); cursor: pointer; display: flex; flex-wrap: wrap; align-items: center; gap: 12px; border: 1px solid #f0f4ff; transition: all 0.2s; }
@@ -190,8 +196,8 @@
 <body>
 <div class="container">
     <div class="header">
-        <h1>📈 基金分组看板 <span>自定义板块与排序</span></h1>
-        <div class="sub">基金名称完整显示 · 20日最大累计跌幅风险提示 · 拖拽调整分组顺序</div>
+        <h1>📈 基金分组看板 <span>拖拽排序与强制更新</span></h1>
+        <div class="sub">基金名称完整显示 · 20日最大累计跌幅风险提示 · 拖动调整分组 · 手动获取最新数据</div>
         
         <div class="group-tabs-wrapper">
             <div class="group-tabs" id="groupTabs"></div>
@@ -223,6 +229,7 @@
             </div>
             <select id="groupSelect" class="group-select"></select>
             <button class="add-btn" id="addFundBtn">➕ 添加</button>
+            <button class="refresh-btn" id="refreshDataBtn">🔄 更新最新数据</button>
         </div>
     </div>
 
@@ -615,7 +622,6 @@
             const deleteBtn = isDefault ? '' : `<button class="delete-group" data-group-id="${group.id}">✕</button>`;
             const renameBtn = isDefault ? '' : `<button class="rename-group" data-group-id="${group.id}" title="重命名">✏️</button>`;
             
-            // 只有非默认分组允许拖拽
             const draggableAttr = isDefault ? '' : 'draggable="true"';
             
             tabsHtml += `<div class="group-tab ${activeClass}" data-group-id="${group.id}" ${draggableAttr}>${group.name} ${countSpan} ${warningBadge} ${greenHeart} ${deleteBtn} ${renameBtn}</div>`;
@@ -636,7 +642,6 @@
             }
         }
 
-        // 绑定点击事件（排除内部按钮与拖动时的误触发）
         document.querySelectorAll('.group-tab[data-group-id]').forEach(el => {
             el.addEventListener('click', (e) => {
                 if (e.target.classList.contains('delete-group') || e.target.classList.contains('rename-group')) return;
@@ -713,7 +718,7 @@
                 e.stopPropagation();
                 this.classList.remove('drag-over');
                 const targetGroupId = this.dataset.groupId;
-                if (targetGroupId === 'default') return; // 不允许插到 default 的位置
+                if (targetGroupId === 'default') return; 
                 
                 if (draggedGroupId && draggedGroupId !== targetGroupId) {
                     const srcIdx = appData.groups.findIndex(g => g.id === draggedGroupId);
@@ -1051,8 +1056,8 @@
         });
     }
 
-    // ========== 基金数据加载 ==========
-    async function loadFundData(code, forceRefresh = false) {
+    // ========== 数据加载功能核心逻辑 ==========
+    async function loadFundData(code, forceRefresh = false, skipRender = false) {
         if (!forceRefresh && appData.fundsCache[code]?.netWorth) {
             return appData.fundsCache[code];
         }
@@ -1064,7 +1069,11 @@
             const script = document.createElement('script');
             script.src = `https://fund.eastmoney.com/pingzhongdata/${code}.js?t=${Date.now()}`;
             script.charset = 'utf-8';
-            const timeoutId = setTimeout(() => { script.remove(); reject(new Error('超时')); updateCardError(code); }, 10000);
+            const timeoutId = setTimeout(() => { 
+                script.remove(); 
+                reject(new Error('超时')); 
+                if (!skipRender) updateCardError(code); 
+            }, 10000);
 
             script.onload = async () => {
                 setTimeout(async () => {
@@ -1097,15 +1106,23 @@
                         }
                         
                         resolve(fundInfo);
-                        renderCards();
-                        renderGroupSummaryPanel();
+                        if (!skipRender) {
+                            renderCards();
+                            renderGroupSummaryPanel();
+                        }
                     } else {
                         reject(new Error('无净值'));
-                        updateCardError(code);
+                        if (!skipRender) updateCardError(code);
                     }
                 }, 200);
             };
-            script.onerror = () => { clearTimeout(timeoutId); GLOBAL_KEYS.forEach(key => delete window[key]); script.remove(); reject(new Error('网络错误')); updateCardError(code); };
+            script.onerror = () => { 
+                clearTimeout(timeoutId); 
+                GLOBAL_KEYS.forEach(key => delete window[key]); 
+                script.remove(); 
+                reject(new Error('网络错误')); 
+                if (!skipRender) updateCardError(code); 
+            };
             document.head.appendChild(script);
         });
     }
@@ -1114,6 +1131,39 @@
         appData.fundsCache[code] = { code, name: code, error: true, sectors: appData.fundsCache[code]?.sectors ||[] };
         renderCards(); renderGroupSummaryPanel();
     }
+
+    // ========== 手动更新全部数据逻辑 ==========
+    document.getElementById('refreshDataBtn')?.addEventListener('click', async function() {
+        this.disabled = true;
+        const originalText = this.innerHTML;
+        this.innerHTML = '⏳ 更新中...';
+        
+        try {
+            // 获取当前选中的分组需要更新的基金列表
+            const currentGroup = appData.groups.find(g => g.id === currentGroupId);
+            const codesToUpdate = currentGroupId === 'default' ? getAllFundCodes() : [...currentGroup.fundCodes];
+            
+            if (codesToUpdate.length === 0) {
+                showToast('当前没有需要更新的基金');
+                return;
+            }
+
+            // 批量强制拉取数据，并传入 skipRender = true，防止每拉取一个就刷新一次DOM造成卡顿
+            const promises = codesToUpdate.map(code => loadFundData(code, true, true));
+            await Promise.allSettled(promises); 
+            
+            saveAppData();
+            renderCards();
+            renderGroupSummaryPanel();
+            showToast('当前分组数据已更新至最新');
+        } catch(e) {
+            console.error(e);
+            showToast('更新过程发生异常');
+        } finally {
+            this.innerHTML = originalText;
+            this.disabled = false;
+        }
+    });
 
     // ========== 基金持仓获取（优化的多数据源组合） ==========
     async function fetchBaiduHoldings(code) {
@@ -1423,11 +1473,9 @@
                 selectedCode = '';
                 try {
                     await loadFundData(code, true);
-                    renderCards();
-                    renderGroupSummaryPanel();
                     showToast('基金添加成功');
                 } catch (e) { 
-                    renderCards(); renderGroupSummaryPanel(); showToast('添加成功，但数据加载失败'); 
+                    showToast('添加成功，但数据加载失败'); 
                 }
             }
         });
